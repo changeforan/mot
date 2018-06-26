@@ -18,8 +18,9 @@ class Siamese:
     def __del__(self):
         self.sess.close()
 
-    def run(self,img_1, img_2):
+    def run(self, *img):
         with self.sess.as_default():
-            o1 = self.siamese.o1.eval({self.siamese.x1: [img_1.reshape(-1) / 255.0]})
-            o2 = self.siamese.o2.eval({self.siamese.x2: [img_2.reshape(-1) / 255.0]})
-            return o1, o2
+            o1 = self.siamese.o1.eval({
+                self.siamese.x1: [i.reshape(-1) / 255. for i in img]
+            })
+            return o1

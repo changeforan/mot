@@ -30,6 +30,7 @@ class Video:
     def write(self, image_np):
         frame = cv2.resize(image_np, (800, 600))
         self.out.write(frame)
+        print(self.frame_count)
 
     def __iter__(self):
         return self

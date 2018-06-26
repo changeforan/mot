@@ -11,3 +11,4 @@ class Path:
     def add_point(self, point):
         self.points.append(point)
 
+

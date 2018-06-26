@@ -8,19 +8,17 @@ import tensorflow as tf
 from utils import label_map_util
 from utils import visualization_utils as vis_util
 
-from siamese import siamese
 from helper import tools
 from helper import _video
 from helper import _path
-
+from helper import sample
 
 MODEL_NAME = 'save_models/faster_rcnn'
 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 PATH_TO_LABELS = os.path.join('/home/cs/work/training/config', 'object_detection.pbtxt')
-VIDEO_PATH = '/home/cs/Videos/cap/fifa2.mp4'
+VIDEO_PATH = '/home/cs/Videos/cap/fifa4.mp4'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
-
 
 def load_tf_model():
 # ## Load a (frozen) Tensorflow model into memory.
@@ -42,39 +40,14 @@ def load_tf_model():
     return detection_graph, category_index
 
 
-def sampling(original_feat):
-    len_y, len_x, deep = original_feat.shape
-    feat = []
-    cut_y = 8
-    cut_x = 4
-    for i in range(deep):
-        for y in range(cut_y):
-            for x in range(cut_x):
-                ymin = int(y * len_y * 1.0 / cut_y)
-                ymax = int((y + 1) * len_y * 1.0 / cut_y)
-                xmin = int(x * len_x * 1.0 / cut_x)
-                xmax = int((x + 1) * len_x * 1.0 / cut_x)
-                feats = original_feat[ymin:ymax + 1, xmin:xmax + 1, i]
-                feat.append(np.max(feats))
-    return feat
 
-
-def get_feat_on_feature_map(box, feature_map):
-    ymin, xmin, ymax, xmax = box
-    len_y, len_x, _ = feature_map.shape
-    return feature_map[
-           int(ymin * len_y):int(ymax * len_y) + 1,
-           int(xmin * len_x):int(xmax * len_x) + 1
-           ]
-
-
-
-def find_close_boxes(box, new_boxes):
+def find_close_boxes(path, new_boxes):
+    box = path.last_box
     close_boxes = []
     if GLOBAL_SEARCH:
         return new_boxes
     else:
-        max_distance = (box[3] - box[1]) * 2
+        max_distance = (box[3] - box[1]) * 5
         for b in new_boxes:
             distance = tools.calc_distance_between_2_vectors(box, b)
             if distance < max_distance:
@@ -82,46 +55,44 @@ def find_close_boxes(box, new_boxes):
     return close_boxes
 
 
-def add_boxes_to_paths(new_boxes, feat_conv, paths, image_np):
-    feature_map = np.squeeze(feat_conv)
+def find_box(path, close_boxes, sampler):
+    min_distance = sys.float_info.max
+    box_to_add = None
+    box_feat = None
+    for box in close_boxes:
+        feat = sampler.sample(box)
+        distance = tools.calc_distance_between_2_vectors(path.last_feat, feat)
+        if distance < min_distance:
+            min_distance = distance
+            box_to_add = box
+            box_feat = feat
+    return box_to_add, box_feat
+
+
+def add_boxes_to_paths(new_boxes,
+                       feat_conv,
+                       paths,
+                       image_np):
+    sampler = sample.SiameseSampler(feat_conv, image_np)
     for path in paths:
-        last_box = path.last_box
-        last_feat = path.last_feat
-        close_boxes = find_close_boxes(last_box, new_boxes)
-        min_distance = sys.float_info.max
-        box_to_add = None
-        for i in close_boxes:
-            original_feat = get_feat_on_feature_map(i, feature_map)
-            feat = sampling(original_feat)
-            distance = tools.calc_distance_between_2_vectors(last_feat, feat)
-            if distance < min_distance:
-                min_distance = distance
-                box_to_add = i
+        close_boxes = find_close_boxes(path, new_boxes)
+        box_to_add, box_feat = find_box(path, close_boxes, sampler)
         if box_to_add is not None:
             path.add_point(tools.get_point(box_to_add))
             path.last_box = box_to_add
-            path.last_feat = sampling(get_feat_on_feature_map(box_to_add, feature_map))
-            print siamese.run(
-                tools.get_player_img(last_box, image_np),
-                tools.get_player_img(box_to_add,image_np)
-            )
+            path.last_feat = box_feat
             new_boxes.remove(box_to_add)
-
-
     for box in new_boxes:
         path = _path.Path(
             tools.get_point(box),
             box,
-            sampling(get_feat_on_feature_map(box, feature_map)),
+            sampler.sample(box),
             len(paths) + 1
         )
         paths.append(path)
 
 
-
-
-
-def detecting(detection_graph, image_np):
+def get_sess(detection_graph):
     with detection_graph.as_default():
         with tf.Session(graph=detection_graph) as sess:
             image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
@@ -131,17 +102,32 @@ def detecting(detection_graph, image_np):
             detection_feat_conv = detection_graph.get_tensor_by_name(
                 'FirstStageFeatureExtractor/resnet_v1_101/resnet_v1_101/block1/unit_1/bottleneck_v1/Relu:0')
             num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-            image_np_expanded = np.expand_dims(image_np, axis=0)
-            return sess.run(
-                [detection_feat_conv,
-                 detection_boxes,
-                 detection_scores,
-                 detection_classes,
-                 num_detections],
-                feed_dict={image_tensor: image_np_expanded}
-            )
+            return sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections
 
-def visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index):
+def detecting(image_tensor,
+              detection_boxes,
+              detection_scores,
+              detection_classes,
+              detection_feat_conv,
+              num_detections,
+              image_np,
+              sess):
+    image_np_expanded = np.expand_dims(image_np, axis=0)
+    return sess.run(
+        [detection_feat_conv,
+         detection_boxes,
+         detection_scores,
+         detection_classes,
+         num_detections],
+        feed_dict={image_tensor: image_np_expanded}
+    )
+
+
+def visualize_boxes_and_labels(image_np,
+                               boxes,
+                               classes,
+                               scores,
+                               category_index):
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         np.squeeze(boxes),
@@ -162,18 +148,27 @@ def visualize_paths(image_np, paths):
 
 def main():
     detection_graph, category_index = load_tf_model()
-    video = _video.Video(VIDEO_PATH, 80)
+    video = _video.Video(VIDEO_PATH, 180)
     paths = []
+    sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections = get_sess(detection_graph)
     for image_np in video:
-        feat_conv, boxes, scores, classes, _ = detecting(detection_graph, image_np)
-        visualize_boxes_and_labels(image_np, boxes, classes, scores,category_index)
+        feat_conv, boxes, scores, classes, _ = detecting(
+            image_tensor,
+            detection_boxes,
+            detection_scores,
+            detection_classes,
+            detection_feat_conv,
+            num_detections,
+            image_np,
+            sess)
         new_boxes = tools.get_all_detected_boxes(boxes, scores)
         add_boxes_to_paths(new_boxes, feat_conv, paths, image_np)
+        visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         visualize_paths(image_np, paths)
         video.write(image_np)
 
+
 if __name__ == "__main__":
-    siamese = siamese.Siamese()
     main()
 
 
