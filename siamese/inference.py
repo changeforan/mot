@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-class siamese:
+class Model:
 
     # Create model
     def __init__(self):

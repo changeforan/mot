@@ -1,6 +1,6 @@
 import numpy as np
-import tools
-from siamese import siamese
+from . import tools
+from siamese import siamese_network
 
 
 class Sampler:
@@ -16,13 +16,14 @@ class Sampler:
 
 class SiameseSampler(Sampler):
 
-    siamese = None
+    def __init__(self):
+        Sampler.__init__(self, None, None)
+        self.model = siamese_network.Siamese()
 
-    def sample(self, box):
-        player_img = tools.get_player_img(box, self.image_np)
-        if not SiameseSampler.siamese:
-            SiameseSampler.siamese = siamese.Siamese()
-        feat = SiameseSampler.siamese.run(player_img)
+
+    def sample(self, box, image_np):
+        player_img = tools.get_player_img(box, image_np)
+        feat = self.model.run(player_img)
         return np.squeeze(feat)
 
 

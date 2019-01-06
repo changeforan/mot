@@ -1,8 +1,7 @@
 # coding: utf-8
-
-import numpy as np
 import os
 import sys
+import numpy as np
 import tensorflow as tf
 
 from utils import label_map_util
@@ -13,12 +12,12 @@ from helper import _video
 from helper import _path
 from helper import sample
 
-MODEL_NAME = 'save_models/faster_rcnn'
-PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
-PATH_TO_LABELS = os.path.join('/home/cs/work/training/config', 'object_detection.pbtxt')
-VIDEO_PATH = '/home/cs/Videos/cap/fifa4.mp4'
+PATH_TO_CKPT = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
+PATH_TO_LABELS = os.path.join('player_label.txt')
+VIDEO_PATH = 'video001.mkv'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
+
 
 def load_tf_model():
 # ## Load a (frozen) Tensorflow model into memory.
@@ -34,17 +33,24 @@ def load_tf_model():
     label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
     categories = label_map_util.convert_label_map_to_categories(
         label_map, max_num_classes=NUM_CLASSES,
-        use_display_name=True
-    )
+        use_display_name=True)
     category_index = label_map_util.create_category_index(categories)
     return detection_graph, category_index
 
 
+def find_surrounding_boxes(path, new_boxes, global_search):
+    """find the boxes around the last box of a path.
 
-def find_close_boxes(path, new_boxes):
+    Arguments:
+        path {[type]} -- [description]
+        new_boxes {[type]} -- [description]
+        global_search {boolean} -- return all new boxes or not
+    Returns:
+        [type] -- [description]
+    """
     box = path.last_box
     close_boxes = []
-    if GLOBAL_SEARCH:
+    if global_search:
         return new_boxes
     else:
         max_distance = (box[3] - box[1]) * 5
@@ -55,12 +61,12 @@ def find_close_boxes(path, new_boxes):
     return close_boxes
 
 
-def find_box(path, close_boxes, sampler):
+def find_box(path, close_boxes, image_np, sampler):
     min_distance = sys.float_info.max
     box_to_add = None
     box_feat = None
     for box in close_boxes:
-        feat = sampler.sample(box)
+        feat = sampler.sample(box, image_np)
         distance = tools.calc_distance_between_2_vectors(path.last_feat, feat)
         if distance < min_distance:
             min_distance = distance
@@ -72,11 +78,11 @@ def find_box(path, close_boxes, sampler):
 def add_boxes_to_paths(new_boxes,
                        feat_conv,
                        paths,
-                       image_np):
-    sampler = sample.SiameseSampler(feat_conv, image_np)
+                       image_np,
+                       sampler):
     for path in paths:
-        close_boxes = find_close_boxes(path, new_boxes)
-        box_to_add, box_feat = find_box(path, close_boxes, sampler)
+        close_boxes = find_surrounding_boxes(path, new_boxes, GLOBAL_SEARCH)
+        box_to_add, box_feat = find_box(path, close_boxes, image_np, sampler)
         if box_to_add is not None:
             path.add_point(tools.get_point(box_to_add))
             path.last_box = box_to_add
@@ -86,23 +92,23 @@ def add_boxes_to_paths(new_boxes,
         path = _path.Path(
             tools.get_point(box),
             box,
-            sampler.sample(box),
-            len(paths) + 1
-        )
+            sampler.sample(box, image_np),
+            len(paths) + 1)
         paths.append(path)
 
 
 def get_sess(detection_graph):
     with detection_graph.as_default():
-        with tf.Session(graph=detection_graph) as sess:
-            image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
-            detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
-            detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
-            detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
-            detection_feat_conv = detection_graph.get_tensor_by_name(
-                'FirstStageFeatureExtractor/resnet_v1_101/resnet_v1_101/block1/unit_1/bottleneck_v1/Relu:0')
-            num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-            return sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections
+        sess = tf.Session(graph=detection_graph)
+        image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+        detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+        detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
+        detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
+        detection_feat_conv = detection_graph.get_tensor_by_name(
+            'FirstStageFeatureExtractor/resnet_v1_101/resnet_v1_101/block1/unit_1/bottleneck_v1/Relu:0')
+        num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+        return sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections
+
 
 def detecting(image_tensor,
               detection_boxes,
@@ -119,8 +125,7 @@ def detecting(image_tensor,
          detection_scores,
          detection_classes,
          num_detections],
-        feed_dict={image_tensor: image_np_expanded}
-    )
+        feed_dict={image_tensor: image_np_expanded})
 
 
 def visualize_boxes_and_labels(image_np,
@@ -137,20 +142,21 @@ def visualize_boxes_and_labels(image_np,
         use_normalized_coordinates=True,
         line_thickness=8)
 
+
 def visualize_paths(image_np, paths):
     vis_util.visualize_paths_on_image_array(
         image_np,
         paths,
         use_normalized_coordinates=True,
-        line_thickness=8
-    )
+        line_thickness=8)
 
 
 def main():
     detection_graph, category_index = load_tf_model()
-    video = _video.Video(VIDEO_PATH, 180)
+    video = _video.Video(VIDEO_PATH, 80)
     paths = []
     sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections = get_sess(detection_graph)
+    sampler = sample.SiameseSampler()
     for image_np in video:
         feat_conv, boxes, scores, classes, _ = detecting(
             image_tensor,
@@ -162,13 +168,12 @@ def main():
             image_np,
             sess)
         new_boxes = tools.get_all_detected_boxes(boxes, scores)
-        add_boxes_to_paths(new_boxes, feat_conv, paths, image_np)
+        add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         visualize_paths(image_np, paths)
         video.write(image_np)
+    sess.close()
 
 
 if __name__ == "__main__":
     main()
-
-

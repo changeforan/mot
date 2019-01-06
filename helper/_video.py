@@ -10,15 +10,14 @@ class Video:
             'out_box.avi',
             cv2.VideoWriter_fourcc(*'XVID'),
             20.0,
-            (800, 600)
-        )
+            (800, 600))
 
     def __del__(self):
         self.cap.release()
         self.out.release()
         cv2.destroyAllWindows()
 
-    def next(self):
+    def __next__(self):
         self.frame_count += 1
         if self.frame_count > self.max_frame:
             raise StopIteration()
@@ -34,3 +33,4 @@ class Video:
 
     def __iter__(self):
         return self
+        
