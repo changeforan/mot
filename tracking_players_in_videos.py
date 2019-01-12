@@ -12,30 +12,30 @@ from helper import _video
 from helper import _path
 from helper import sample
 
-PATH_TO_CKPT = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
+PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
 VIDEO_PATH = 'video001.mkv'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 
 
-def load_tf_model():
-# ## Load a (frozen) Tensorflow model into memory.
+def load_tf_model(path_to_model):
+    """Load a (frozen) Tensorflow model into memory.
+    """
     detection_graph = tf.Graph()
     with detection_graph.as_default():
         od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
+        with tf.gfile.GFile(path_to_model, 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
+    return detection_graph
 
-    # ## Loading label map
-    label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-    categories = label_map_util.convert_label_map_to_categories(
-        label_map, max_num_classes=NUM_CLASSES,
-        use_display_name=True)
+def load_label_map(path_to_labels, num_classes):
+    label_map = label_map_util.load_labelmap(path_to_labels)
+    categories = label_map_util.convert_label_map_to_categories(label_map, num_classes) 
     category_index = label_map_util.create_category_index(categories)
-    return detection_graph, category_index
+    return category_index
 
 
 def find_surrounding_boxes(path, new_boxes, global_search):
@@ -152,7 +152,8 @@ def visualize_paths(image_np, paths):
 
 
 def main():
-    detection_graph, category_index = load_tf_model()
+    detection_graph = load_tf_model(PATH_TO_MODEL)
+    category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
     video = _video.Video(VIDEO_PATH, 80)
     paths = []
     sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections = get_sess(detection_graph)

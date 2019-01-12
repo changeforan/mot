@@ -4,7 +4,7 @@ import tensorflow as tf
 #import helpers
 from . import inference
 
-MODEL_PATH = 'D:\\work\\football_match_mot\\mot\\save_models\\siamese\\model'
+MODEL_PATH = '/Users/cs/work/football_match_mot/mot/save_models/siamese/model'
 
 class Siamese:
     def __init__(self):
