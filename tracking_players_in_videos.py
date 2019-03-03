@@ -4,11 +4,11 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from utils import label_map_util
-from utils import visualization_utils as vis_util
+from object_detection.utils import label_map_util
+from object_detection.utils import visualization_utils as vis_util
 
 from helper import tools
-from helper import _video
+from helper import video_util
 from helper import _path
 from helper import sample
 
@@ -30,6 +30,7 @@ def load_tf_model(path_to_model):
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
     return detection_graph
+
 
 def load_label_map(path_to_labels, num_classes):
     label_map = label_map_util.load_labelmap(path_to_labels)
@@ -154,8 +155,9 @@ def visualize_paths(image_np, paths):
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
-    video = _video.Video(VIDEO_PATH, 80)
+    video = video_util.open_video(VIDEO_PATH, 80)
     paths = []
+    image_np_list = []
     sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections = get_sess(detection_graph)
     sampler = sample.SiameseSampler()
     for image_np in video:
@@ -172,7 +174,8 @@ def main():
         add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         visualize_paths(image_np, paths)
-        video.write(image_np)
+        image_np_list.append(image_np)
+    video_util.save_video('out.avi', image_np_list)
     sess.close()
 
 

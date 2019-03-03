@@ -1,15 +1,13 @@
-#import system things
 import tensorflow as tf
-
-#import helpers
 from . import inference
 
-MODEL_PATH = '/Users/cs/work/football_match_mot/mot/save_models/siamese/model'
+MODEL_PATH = 'D:\\work\\football_match_mot\\mot\\save_models\\siamese\\model'
+
 
 class Siamese:
     def __init__(self):
         self.sess = tf.InteractiveSession()
-        self.model = inference.Model()
+        self.model = inference.get_model()
         saver = tf.train.Saver()
         saver.restore(self.sess, MODEL_PATH)
 

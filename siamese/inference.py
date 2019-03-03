@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 class Model:
 
     # Create model
@@ -64,3 +65,7 @@ class Model:
         losses = tf.add(pos, neg, name="losses")
         loss = tf.reduce_mean(losses, name="loss")
         return loss
+
+
+def get_model():
+    return Model()

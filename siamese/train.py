@@ -1,6 +1,6 @@
 
 """ Siamese implementation using Tensorflow with MNIST example.
-This siamese network embeds a 28x28 image (a point in 784D)
+This save_model network embeds a 28x28 image (a point in 784D)
 into a point in 2D.
 
 By Youngwook Paul Kwon (young at berkeley.edu)
@@ -17,16 +17,16 @@ import numpy as np
 import os
 
 #import helpers
-import inference
-from inputdata import Player
+from . import inference
+from .inputdata import Player
 
 
 # prepare data and tf.session
 players = Player()
 sess = tf.InteractiveSession()
 
-# setup siamese network
-siamese = inference.siamese()
+# setup save_model network
+siamese = inference.get_model()
 train_step = tf.train.GradientDescentOptimizer(0.01).minimize(siamese.loss)
 saver = tf.train.Saver()
 tf.initialize_all_variables().run()

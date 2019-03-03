@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-PATH = '/home/cs/work/siamese/siamese_tf_mnist/fifa/'
+PATH = '/home/cs/work/save_model/siamese_tf_mnist/fifa/'
 VIDEOS = [
     # 'fifa1/',
     # 'fifa2/',

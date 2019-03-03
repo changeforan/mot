@@ -4,15 +4,15 @@ import numpy as np
 import os
 
 #import helpers
-import inference
-from inputdata import Player
+from . import  inference
+from .inputdata import Player
 
 
 if __name__ == "__main__":
 
     players = Player()
     sess = tf.InteractiveSession()
-    siamese = inference.siamese()
+    siamese = inference.get_model()
     saver = tf.train.Saver()
     model_ckpt = './model.meta'
     if os.path.isfile(model_ckpt):
