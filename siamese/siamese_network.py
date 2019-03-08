@@ -1,7 +1,7 @@
 import tensorflow as tf
 from . import inference
 
-MODEL_PATH = 'D:\\work\\football_match_mot\\mot\\save_models\\siamese\\model'
+MODEL_PATH = '/home/cs/work/football_match_mot/mot/save_models/siamese/model'
 
 
 class Siamese:
