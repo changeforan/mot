@@ -1,6 +1,5 @@
 # coding: utf-8
 import os
-import sys
 import numpy as np
 import tensorflow as tf
 from scipy.optimize import linear_sum_assignment
@@ -11,7 +10,6 @@ from object_detection.utils import visualization_utils as vis_util
 from siamese import siamese_network
 from helper import tools, video_util, detection, tracklet
 import construct_similarity_matrix
-from helper import sample
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
@@ -38,65 +36,6 @@ def load_label_map(path_to_labels, num_classes):
     categories = label_map_util.convert_label_map_to_categories(label_map, num_classes) 
     category_index = label_map_util.create_category_index(categories)
     return category_index
-
-
-def find_surrounding_boxes(path, new_boxes, global_search):
-    """find the boxes around the last box of a path.
-
-    Arguments:
-        path {[type]} -- [description]
-        new_boxes {[type]} -- [description]
-        global_search {boolean} -- return all new boxes or not
-    Returns:
-        [type] -- [description]
-    """
-    box = path.last_box
-    close_boxes = []
-    if global_search:
-        return new_boxes
-    else:
-        max_distance = (box[3] - box[1]) * 5
-        for b in new_boxes:
-            distance = tools.calc_distance_between_2_vectors(box, b)
-            if distance < max_distance:
-                close_boxes.append(b)
-    return close_boxes
-
-
-def find_box(path, close_boxes, image_np, sampler):
-    min_distance = sys.float_info.max
-    box_to_add = None
-    box_feat = None
-    for box in close_boxes:
-        feat = sampler.sample(box, image_np)
-        distance = tools.calc_distance_between_2_vectors(path.last_feat, feat)
-        if distance < min_distance:
-            min_distance = distance
-            box_to_add = box
-            box_feat = feat
-    return box_to_add, box_feat
-
-
-def add_boxes_to_paths(new_boxes,
-                       feat_conv,
-                       paths,
-                       image_np,
-                       sampler):
-    for path in paths:
-        close_boxes = find_surrounding_boxes(path, new_boxes, GLOBAL_SEARCH)
-        box_to_add, box_feat = find_box(path, close_boxes, image_np, sampler)
-        if box_to_add is not None:
-            path.add_point(tools.get_point(box_to_add))
-            path.last_box = box_to_add
-            path.last_feat = box_feat
-            new_boxes.remove(box_to_add)
-    for box in new_boxes:
-        path = tracklet.Tracklet(
-            tools.get_point(box),
-            box,
-            sampler.sample(box, image_np),
-            len(paths) + 1)
-        paths.append(path)
 
 
 def get_sess(detection_graph):
@@ -203,12 +142,21 @@ def main():
                                                    ))
             continue
         S = 1. - S
-        print(S.shape)
-        if not S.shape[0] == S.shape[1]:
-            break
+        print(video.index(image_np) +': '+ S.shape)
         row_index, col_index = linear_sum_assignment(S)
-        for row in row_index:
-            tracklets[row].add_detection(detections[col_index[row]])
+        for i,j in zip(row_index, col_index):
+            tracklets[i].add_detection(detections[j])
+        tracklets_left = [x for x in range(0, len(tracklets)) if not x in row_index]
+        detections_left = [x for x in range(0, len(tracklets)) if not x in col_index]
+        if tracklets_left:
+            pass
+        if detections_left:
+            for d in detections_left:
+                tracklets.append(tracklet.Tracklet(detections[d].location,
+                                                   detections[d].feat_cnn,
+                                                   detections[d].feat_sim,
+                                                   len(tracklets) + 1
+                                                   ))
         visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         visualize_paths(image_np, tracklets)
         image_np_list.append(image_np)
