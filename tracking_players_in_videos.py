@@ -186,7 +186,7 @@ def main():
             player_img = tools.get_player_img(box, image_np)
             feat_cnn = [1,1,1,1]
             feat_sim = np.squeeze(siamese_model.run(player_img))
-            detections = detection.Detection(location, feat_cnn, feat_sim)
+            detections.append(detection.Detection(location, feat_cnn, feat_sim))
 
         S = np.array([])
         try:
@@ -202,6 +202,7 @@ def main():
                                                    ))
 
         print(S)
+        break
 
         # add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         # visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
