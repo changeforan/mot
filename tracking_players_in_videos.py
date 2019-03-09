@@ -201,7 +201,10 @@ def main():
                                                    d.feat_sim,
                                                    len(tracklets) + 1
                                                    ))
+        if not S:
+            continue
 
+        S = 1. - S
         print(S)
         print(S.shape)
         row_index, col_index = linear_sum_assignment(S)
