@@ -204,7 +204,8 @@ def main():
             continue
         S = 1. - S
         print(S.shape)
-        assert S.shape[0] == S.shape[1], 'mn not match'
+        if not S.shape[0] == S.shape[1]:
+            break
         row_index, col_index = linear_sum_assignment(S)
         for row in row_index:
             tracklets[row].add_detection(detections[col_index[row]])
