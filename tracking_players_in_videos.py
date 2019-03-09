@@ -147,7 +147,7 @@ def main():
         for i,j in zip(row_index, col_index):
             tracklets[i].add_detection(detections[j])
         tracklets_left = [x for x in range(0, len(tracklets)) if not x in row_index]
-        detections_left = [x for x in range(0, len(tracklets)) if not x in col_index]
+        detections_left = [x for x in range(0, len(detections)) if not x in col_index]
         if tracklets_left:
             pass
         if detections_left:
