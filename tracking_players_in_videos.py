@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import tensorflow as tf
+from scipy.optimize import linear_sum_assignment
 
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
@@ -203,6 +204,10 @@ def main():
 
         print(S)
         print(S.shape)
+        row_index, col_index = linear_sum_assignment(S)
+        print(row_index + 1)
+        print(col_index + 1)
+        print(S[row_index, col_index])
         # add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         # visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         # visualize_paths(image_np, paths)
