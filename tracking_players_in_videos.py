@@ -142,7 +142,7 @@ def main():
                                                    ))
             continue
         S = 1. - S
-        print(video.index(image_np) +': '+ S.shape)
+        print(S.shape)
         row_index, col_index = linear_sum_assignment(S)
         for i,j in zip(row_index, col_index):
             tracklets[i].add_detection(detections[j])
