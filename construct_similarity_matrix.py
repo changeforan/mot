@@ -56,7 +56,7 @@ def get_app_matrix(tracklets: [tracklet.Tracklet], detections: [detection.Detect
     for i in range(0, len(tracklets)):
         last_feat_sim = tracklets[i].last_feat_sim
         for j in range(0, len(detections)):
-            feat_sim = detections[j].feat_cnn
+            feat_sim = detections[j].feat_sim
             app[i][j] = w_3 * calc_cosine_similarity(last_feat_sim, feat_sim)
     return app
 
