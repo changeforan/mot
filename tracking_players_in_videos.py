@@ -202,7 +202,7 @@ def main():
                                                    ))
 
         print(S)
-
+        print(S.shape)
         # add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         # visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         # visualize_paths(image_np, paths)
