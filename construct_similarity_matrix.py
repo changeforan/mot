@@ -66,6 +66,8 @@ def get_similarity_matrix(tracklets:[tracklet.Tracklet], detections:[detection.D
         raise TrackletsEmpty('tracklets is empty')
     if not detections:
         raise DetectionsEmpty('detections is empty')
+    print(tracklets)
+    print(detections)
 
     M = get_mot_matrix(tracklets, detections)
     C = get_cnn_matrix(tracklets, detections)
