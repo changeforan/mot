@@ -155,7 +155,7 @@ def visualize_paths(image_np, paths):
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
-    video = video_util.open_video(VIDEO_PATH, 80)
+    video = video_util.open_video(VIDEO_PATH, 2)
 
     # the tracklet set at time T-1
     tracklets = []
@@ -202,7 +202,6 @@ def main():
                                                    ))
 
         print(S)
-        break
 
         # add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
         # visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
