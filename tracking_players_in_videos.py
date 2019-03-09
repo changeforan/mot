@@ -7,9 +7,9 @@ import tensorflow as tf
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
 
-from helper import tools
-from helper import video_util
-from helper import _path
+from siamese import siamese_network
+from helper import tools, video_util, detection, tracklet
+import construct_similarity_matrix
 from helper import sample
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
@@ -90,7 +90,7 @@ def add_boxes_to_paths(new_boxes,
             path.last_feat = box_feat
             new_boxes.remove(box_to_add)
     for box in new_boxes:
-        path = _path.Path(
+        path = tracklet.Tracklet(
             tools.get_point(box),
             box,
             sampler.sample(box, image_np),
@@ -105,23 +105,23 @@ def get_sess(detection_graph):
         detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
         detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
         detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
-        detection_feat_conv = detection_graph.get_tensor_by_name(
+        detection_feat_cnn = detection_graph.get_tensor_by_name(
             'FirstStageFeatureExtractor/resnet_v1_101/resnet_v1_101/block1/unit_1/bottleneck_v1/Relu:0')
         num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-        return sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections
+        return sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_cnn, num_detections
 
 
 def detecting(image_tensor,
               detection_boxes,
               detection_scores,
               detection_classes,
-              detection_feat_conv,
+              detection_feat_cnn,
               num_detections,
               image_np,
               sess):
     image_np_expanded = np.expand_dims(image_np, axis=0)
     return sess.run(
-        [detection_feat_conv,
+        [detection_feat_cnn,
          detection_boxes,
          detection_scores,
          detection_classes,
@@ -156,25 +156,57 @@ def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
     video = video_util.open_video(VIDEO_PATH, 80)
-    paths = []
+
+    # the tracklet set at time T-1
+    tracklets = []
     image_np_list = []
-    sess, image_tensor, detection_boxes, detection_scores, detection_classes, detection_feat_conv, num_detections = get_sess(detection_graph)
-    sampler = sample.SiameseSampler()
+    sess, image_tensor, detection_boxes, \
+    detection_scores, detection_classes, \
+    detection_feat_cnn, num_detections = get_sess(detection_graph)
+
+    # the siamese network model for extracting feat_sim
+    siamese_model = siamese_network.Siamese()
+
     for image_np in video:
-        feat_conv, boxes, scores, classes, _ = detecting(
+        feat_cnn, boxes, scores, classes, _ = detecting(
             image_tensor,
             detection_boxes,
             detection_scores,
             detection_classes,
-            detection_feat_conv,
+            detection_feat_cnn,
             num_detections,
             image_np,
             sess)
-        new_boxes = tools.get_all_detected_boxes(boxes, scores)
-        add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
-        visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
-        visualize_paths(image_np, paths)
-        image_np_list.append(image_np)
+
+        # the detection set at time T
+        detections = []
+        detected_boxes = tools.get_all_detected_boxes(boxes, scores)
+        for box in detected_boxes:
+            location = tools.get_point(box)
+            player_img = tools.get_player_img(box, image_np)
+            feat_cnn = [1,1,1,1]
+            feat_sim = np.squeeze(siamese_model.run(player_img))
+            detections = detection.Detection(location, feat_cnn, feat_sim)
+
+        S = np.array([])
+        try:
+            S = construct_similarity_matrix.get_similarity_matrix(tracklets, detections)
+        except construct_similarity_matrix.DetectionsEmpty:
+            continue
+        except construct_similarity_matrix.TrackletsEmpty:
+            for d in detections:
+                tracklets.append(tracklet.Tracklet(d.location,
+                                                   d.feat_cnn,
+                                                   d.feat_sim,
+                                                   len(tracklets) + 1
+                                                   ))
+
+        print(S)
+
+        # add_boxes_to_paths(new_boxes, feat_conv, paths, image_np, sampler)
+        # visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
+        # visualize_paths(image_np, paths)
+        # image_np_list.append(image_np)
     video_util.save_video('out.avi', image_np_list)
     sess.close()
 
