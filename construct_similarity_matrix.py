@@ -3,8 +3,8 @@ import numpy as np
 import math
 
 w_1 = 2.
-w_2 = 0.
-w_3 = 0.5
+w_2 = 1.
+w_3 = 1.
 
 
 class TrackletsEmpty(Exception):
@@ -70,8 +70,5 @@ def get_similarity_matrix(tracklets:[tracklet.Tracklet], detections:[detection.D
     M = get_mot_matrix(tracklets, detections)
     C = get_cnn_matrix(tracklets, detections)
     A = get_app_matrix(tracklets, detections)
-    print(M)
-    print(C)
-    print(A)
     return np.multiply(M, C, A)
 
