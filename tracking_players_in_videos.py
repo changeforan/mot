@@ -17,7 +17,7 @@ VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.95
+QUALITY_THRESHOLD = 0.9
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -96,7 +96,7 @@ def visualize_paths(image_np, tracklets):
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
-    video = video_util.open_video(VIDEO_PATH, 200)
+    video = video_util.open_video(VIDEO_PATH, 400)
     progress = 0
 
     # the tracklet set at time T-1
@@ -152,17 +152,17 @@ def main():
         print(str(progress) + ': ' + str(S.shape))
 
         # the Hungarian algorithm
-        trk_index, det_index = linear_sum_assignment(1.- S)
+        trk_index, det_index = linear_sum_assignment(1. - S)
 
         low_quality_trk_index = []
         low_quality_det_index = []
 
-        for i,j in zip(trk_index, det_index):
-            if S[i,j] < tracklets[i].quality * QUALITY_THRESHOLD:
+        for i, j in zip(trk_index, det_index):
+            if S[i, j] < tracklets[i].quality * QUALITY_THRESHOLD:
                 low_quality_trk_index.append(i)
                 low_quality_det_index.append(j)
                 continue
-            tracklets[i].add_detection(detections[j], S[i,j])
+            tracklets[i].add_detection(detections[j], S[i, j])
 
         tracklets_left_index = [x for x in range(0, len(tracklets)) if not x in trk_index or x in low_quality_trk_index]
         detections_left_index = [x for x in range(0, len(detections)) if not x in det_index or x in low_quality_det_index]
