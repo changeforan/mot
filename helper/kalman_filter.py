@@ -116,13 +116,11 @@ class KalmanFilter(object):
 
 if __name__ == '__main__':
     SS = KalmanFilter()
-    z = [(1,0), (2,0), (3,0), (4,0), (5,0)]
+    z = [(1,1), (2,2), (3,3), (4,4), (5,5)]
     for i in range(len(z)) :
         print('ordem',i)
-        print('')
         Correct = SS.correct([z[i][0], z[i][1]], 1)
         Predict = SS.predict()
         print ("Predict :", Predict)
-        print ("")
-        print ("Correction :", Correct)
+        print("")
     print("Predict :", SS.predict())
