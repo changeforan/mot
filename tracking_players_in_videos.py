@@ -17,7 +17,7 @@ VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.9
+QUALITY_THRESHOLD = 0.85
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
