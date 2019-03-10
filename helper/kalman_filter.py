@@ -67,7 +67,7 @@ class KalmanFilter(object):
         self.P = np.dot(self.F, np.dot(self.P, self.F.T)) + self.Q
         self.lastResult = self.x  # same last predicted result
         # print ("pred", self.x)
-        return self.x
+        return self.x[0]
 
     def correct(self, z, flag):
         """Correct or update state vector u and variance of uncertainty P (covariance).
@@ -123,4 +123,3 @@ if __name__ == '__main__':
         Predict = SS.predict()
         print ("Predict :", Predict)
         print("")
-    print("Predict :", SS.predict())
