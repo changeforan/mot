@@ -163,12 +163,12 @@ def main():
         detections_left_index = [x for x in range(0, len(detections)) if not x in det_index or x in low_quality_det_index]
 
         if tracklets_left_index:
-            disappear_index = []
+            disappear_trklets = []
             for t in tracklets_left_index:
                 if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
-                    disappear_index.append(t)
-            for t in disappear_index:
-                tracklets.remove(tracklets[t])
+                    disappear_trklets.append(tracklets[t])
+            for t in disappear_trklets:
+                tracklets.remove(t)
 
         if detections_left_index:
             for d in detections_left_index:
