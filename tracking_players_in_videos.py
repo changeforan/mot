@@ -131,8 +131,7 @@ def main():
             width = tools.get_width(box)
             player_img = tools.get_player_img(box, image_np)
             feat_cnn = [1,1,1,1]
-            feat_sim = [1,1]
-            #feat_sim = np.squeeze(siamese_model.run(player_img))
+            feat_sim = np.squeeze(siamese_model.run(player_img))
             detections.append(detection.Detection(location, feat_cnn, feat_sim, width))
 
         S = np.array([])

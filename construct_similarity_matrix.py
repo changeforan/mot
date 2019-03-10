@@ -2,9 +2,9 @@ from helper import detection, tracklet
 import numpy as np
 import math
 
-w_1 = .5
+w_1 = .8
 w_2 = 1.
-w_3 = 1.
+w_3 = 1.2
 
 
 class TrackletsEmpty(Exception):
