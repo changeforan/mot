@@ -97,6 +97,7 @@ def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
     video = video_util.open_video(VIDEO_PATH, 400)
+    progress = 0
 
     # the tracklet set at time T-1
     tracklets = []
@@ -109,6 +110,9 @@ def main():
     siamese_model = siamese_network.Siamese()
 
     for image_np in video:
+        progress += 1
+        print(progress)
+
         feat_cnn, boxes, scores, classes, _ = detecting(
             image_tensor,
             detection_boxes,
@@ -155,9 +159,12 @@ def main():
         detections_left_index = [x for x in range(0, len(detections)) if not x in col_index]
 
         if tracklets_left_index:
+            disappear_index = []
             for t in tracklets_left_index:
                 if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
-                    tracklets.remove(tracklets[t])
+                    disappear_index.append(t)
+            for t in disappear_index:
+                tracklets.remove(tracklets[t])
 
         if detections_left_index:
             for d in detections_left_index:
