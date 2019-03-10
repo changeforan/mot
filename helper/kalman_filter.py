@@ -16,7 +16,7 @@ class KalmanFilter(object):
         Return:
             None
         """
-        self.dt = 1.   # delta time
+        self.dt = .05   # delta time
 
         self.H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])# matrix in observation equations, measurement function A ==> for H
         self.x = np.zeros((4, 1))# previous state vector, state mean know as x, u ==> for x
@@ -120,8 +120,8 @@ if __name__ == '__main__':
     for i in range(len(z)) :
         print('ordem',i)
         print('')
-        Predict = SS.predict()
         Correct = SS.correct([z[i][0], z[i][1]], 1)
+        Predict = SS.predict()
         print ("Predict :", Predict)
         print ("")
         print ("Correction :", Correct)
