@@ -116,7 +116,7 @@ class KalmanFilter(object):
 
 if __name__ == '__main__':
     SS = KalmanFilter()
-    z = [(1,1), (2,2), (3,3), (4,4), (5,5)]
+    z = [(1,1), (2,2), (3,3), (4,2), (5,1)]
     for i in range(len(z)) :
         print('ordem',i)
         Correct = SS.correct([z[i][0], z[i][1]], 1)
