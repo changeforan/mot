@@ -120,8 +120,8 @@ if __name__ == '__main__':
     for i in range(len(z)) :
         print('ordem',i)
         print('')
-        Correct = SS.correct([z[i][0], z[i][1]], 1)
         Predict = SS.predict()
+        Correct = SS.correct([z[i][0], z[i][1]], 1)
         print ("Predict :", Predict)
         print ("")
         print ("Correction :", Correct)
