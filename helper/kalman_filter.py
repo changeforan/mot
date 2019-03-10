@@ -125,3 +125,4 @@ if __name__ == '__main__':
         print ("Predict :", Predict)
         print ("")
         print ("Correction :", Correct)
+    print("Predict :", SS.predict())
