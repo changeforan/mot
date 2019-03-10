@@ -13,7 +13,7 @@ import construct_similarity_matrix
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
-VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole1.avi'
+VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
@@ -128,10 +128,12 @@ def main():
         detected_boxes = tools.get_all_detected_boxes(boxes, scores)
         for box in detected_boxes:
             location = tools.get_point(box)
+            width = tools.get_width(box)
             player_img = tools.get_player_img(box, image_np)
             feat_cnn = [1,1,1,1]
-            feat_sim = np.squeeze(siamese_model.run(player_img))
-            detections.append(detection.Detection(location, feat_cnn, feat_sim))
+            feat_sim = [1,1]
+            # feat_sim = np.squeeze(siamese_model.run(player_img))
+            detections.append(detection.Detection(location, feat_cnn, feat_sim, width))
 
         S = np.array([])
         try:
@@ -148,10 +150,13 @@ def main():
             continue
 
         print(str(progress) + ': ' + str(S.shape))
+
+        # the Hungarian algorithm
         trk_index, det_index = linear_sum_assignment(1.- S)
 
         low_quality_trk_index = []
         low_quality_det_index = []
+
         for i,j in zip(trk_index, det_index):
             if S[i,j] < tracklets[i].quality * QUALITY_THRESHOLD:
                 low_quality_trk_index.append(i)

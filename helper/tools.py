@@ -29,6 +29,9 @@ def get_all_detected_boxes(original_boxes,
 def get_point(box):
     return [box[2], (box[1] + box[3]) / 2]
 
+def get_width(box):
+    return abs(box[3] - box[1])
+
 def get_player_img(box, image_np):
     im_width, im_height,_ = image_np.shape
     ymin, xmin, ymax, xmax = box

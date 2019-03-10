@@ -36,7 +36,8 @@ def get_mot_matrix(tracklets:[tracklet.Tracklet], detections:[detection.Detectio
         last_point = tracklets[i].points[-1]
         for j in range(0, len(detections)):
             location = detections[j].location
-            dis = math.e ** (-w_1 * ((last_point[0] - location[0]) ** 2 + (last_point[1] - location[1]) ** 2))
+            width = detections[j].width
+            dis = math.e ** (-w_1 * (((last_point[0] - location[0]) / width) ** 2 + ((last_point[1] - location[1]) / width)** 2))
             mot[i][j] = dis
     return mot
 
