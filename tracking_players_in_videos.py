@@ -17,7 +17,7 @@ VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.8
+QUALITY_THRESHOLD = 0.9
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -111,7 +111,7 @@ def main():
 
     for image_np in video:
         progress += 1
-        print(progress)
+
 
         feat_cnn, boxes, scores, classes, _ = detecting(
             image_tensor,
@@ -147,16 +147,20 @@ def main():
                                                    ))
             continue
 
+        print(str(progress) + ': ' + S.shape())
+        trk_index, det_index = linear_sum_assignment(1.- S)
 
-        row_index, col_index = linear_sum_assignment(1.- S)
-        for i,j in zip(row_index, col_index):
+        low_quality_trk_index = []
+        low_quality_det_index = []
+        for i,j in zip(trk_index, det_index):
             if S[i,j] < tracklets[i].quality * QUALITY_THRESHOLD:
-                row_index.remove(i)
-                col_index.remove(j)
+                low_quality_trk_index.append(i)
+                low_quality_det_index.append(j)
+                continue
             tracklets[i].add_detection(detections[j], S[i,j])
 
-        tracklets_left_index = [x for x in range(0, len(tracklets)) if not x in row_index]
-        detections_left_index = [x for x in range(0, len(detections)) if not x in col_index]
+        tracklets_left_index = [x for x in range(0, len(tracklets)) if not x in trk_index or x in low_quality_trk_index]
+        detections_left_index = [x for x in range(0, len(detections)) if not x in det_index or x in low_quality_det_index]
 
         if tracklets_left_index:
             disappear_index = []
