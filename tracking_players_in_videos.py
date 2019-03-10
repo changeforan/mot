@@ -147,7 +147,7 @@ def main():
                                                    ))
             continue
 
-        print(str(progress) + ': ' + str(S.shape()))
+        print(str(progress) + ': ' + str(S.shape))
         trk_index, det_index = linear_sum_assignment(1.- S)
 
         low_quality_trk_index = []
