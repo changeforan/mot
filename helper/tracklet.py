@@ -8,7 +8,7 @@ class Tracklet:
         self.last_feat_sim = feat_sim
         self.id = id
         self.disappear = disappear
-        self.quality = 1
+        self.quality = quality
 
     def add_detection(self, detection, score):
         self.points.append(detection.location)

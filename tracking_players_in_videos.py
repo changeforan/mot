@@ -96,7 +96,7 @@ def visualize_paths(image_np, tracklets):
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
-    video = video_util.open_video(VIDEO_PATH, 400)
+    video = video_util.open_video(VIDEO_PATH, 200)
     progress = 0
 
     # the tracklet set at time T-1
@@ -131,8 +131,8 @@ def main():
             width = tools.get_width(box)
             player_img = tools.get_player_img(box, image_np)
             feat_cnn = [1,1,1,1]
-            feat_sim = [1,1]
-            # feat_sim = np.squeeze(siamese_model.run(player_img))
+            #feat_sim = [1,1]
+            feat_sim = np.squeeze(siamese_model.run(player_img))
             detections.append(detection.Detection(location, feat_cnn, feat_sim, width))
 
         S = np.array([])
