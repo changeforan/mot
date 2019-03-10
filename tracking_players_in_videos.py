@@ -16,7 +16,8 @@ PATH_TO_LABELS = os.path.join('player_label.txt')
 VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
-
+DISAPPEAR_THRESHOLD = 5
+QUALITY_THRESHOLD = 0.8
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -141,22 +142,31 @@ def main():
                                                    len(tracklets) + 1
                                                    ))
             continue
-        S = 1. - S
-        print(S.shape)
-        row_index, col_index = linear_sum_assignment(S)
+
+
+        row_index, col_index = linear_sum_assignment(1.- S)
         for i,j in zip(row_index, col_index):
-            tracklets[i].add_detection(detections[j])
-        tracklets_left = [x for x in range(0, len(tracklets)) if not x in row_index]
-        detections_left = [x for x in range(0, len(detections)) if not x in col_index]
-        if tracklets_left:
-            pass
-        if detections_left:
-            for d in detections_left:
+            if S[i,j] < tracklets[i].quality * QUALITY_THRESHOLD:
+                row_index.remove(i)
+                col_index.remove(j)
+            tracklets[i].add_detection(detections[j], S[i,j])
+
+        tracklets_left_index = [x for x in range(0, len(tracklets)) if not x in row_index]
+        detections_left_index = [x for x in range(0, len(detections)) if not x in col_index]
+
+        if tracklets_left_index:
+            for t in tracklets_left_index:
+                if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
+                    tracklets.remove(tracklets[t])
+
+        if detections_left_index:
+            for d in detections_left_index:
                 tracklets.append(tracklet.Tracklet(detections[d].location,
                                                    detections[d].feat_cnn,
                                                    detections[d].feat_sim,
                                                    len(tracklets) + 1
                                                    ))
+
         visualize_boxes_and_labels(image_np, boxes, classes, scores, category_index)
         visualize_paths(image_np, tracklets)
         image_np_list.append(image_np)
