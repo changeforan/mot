@@ -13,7 +13,7 @@ import construct_similarity_matrix
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
-VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
+VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole1.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
