@@ -17,7 +17,7 @@ VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.85
+QUALITY_THRESHOLD = 0.95
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -193,7 +193,7 @@ def main():
         image_np_list.append(image_np)
     video_util.save_video('out.avi', image_np_list)
     sess.close()
-    save_tracklets(tracklets)
+    #save_tracklets(tracklets)
 
 
 if __name__ == "__main__":
