@@ -27,7 +27,8 @@ class Tracklet:
         return self.disappear
 
     def predict(self):
-        return self.ss.predict() / 100.
+        return self.points[-1]
+        #return self.ss.predict() / 100.
 
 
 
