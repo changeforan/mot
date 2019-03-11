@@ -13,7 +13,7 @@ import construct_similarity_matrix
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
-VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole4.avi'
+VIDEO_PATH = '/home/cs/Desktop/dataset/ISSIA/filmrole/filmrole3.avi'
 NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
@@ -21,7 +21,7 @@ QUALITY_THRESHOLD = 0.95
 NEAR_THRESHOLD = 1.
 
 def load_tf_model(path_to_model):
-    """Load a (frozen) Tensorflow model into memory.
+    """Load a (frozen) tensorflow model into memory.
     """
     detection_graph = tf.Graph()
     with detection_graph.as_default():
