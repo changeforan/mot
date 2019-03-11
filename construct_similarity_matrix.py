@@ -33,11 +33,11 @@ def calc_cosine_similarity(A, B):
 def get_mot_matrix(tracklets:[tracklet.Tracklet], detections:[detection.Detection]):
     mot = np.empty((len(tracklets), len(detections)))
     for i in range(0, len(tracklets)):
-        last_point = tracklets[i].points[-1]
+        predict_position = tracklets[i].predict()
         for j in range(0, len(detections)):
             location = detections[j].location
             width = detections[j].width
-            dis = math.e ** (-w_1 * (((last_point[0] - location[0]) / width) ** 2 + ((last_point[1] - location[1]) / width)** 2))
+            dis = math.e ** (-w_1 * (((predict_position[0] - location[0]) / width) ** 2 + ((predict_position[1] - location[1]) / width) ** 2))
             mot[i][j] = dis
     return mot
 
