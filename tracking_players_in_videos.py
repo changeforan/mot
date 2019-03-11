@@ -18,7 +18,7 @@ NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
 QUALITY_THRESHOLD = 0.95
-NEAR_THRESHOLD = 0.5
+NEAR_THRESHOLD = 1.
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -121,7 +121,7 @@ def find_nearest_detection(origin, detections, threshold=NEAR_THRESHOLD):
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
-    video = video_util.open_video(VIDEO_PATH, 150)
+    video = video_util.open_video(VIDEO_PATH, 400)
     progress = 0
 
     # the tracklet set at time T-1
