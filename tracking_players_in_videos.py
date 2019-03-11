@@ -93,6 +93,12 @@ def visualize_paths(image_np, tracklets):
         line_thickness=8)
 
 
+def save_tracklets(tracklets:[tracklet.Tracklet]):
+    p = [t.points for t in tracklets]
+    np.savetxt("points.csv", p, delimiter=",", fmt='%s')
+
+
+
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
     category_index = load_label_map(PATH_TO_LABELS, NUM_CLASSES)
@@ -187,6 +193,7 @@ def main():
         image_np_list.append(image_np)
     video_util.save_video('out.avi', image_np_list)
     sess.close()
+    save_tracklets(tracklets)
 
 
 if __name__ == "__main__":
