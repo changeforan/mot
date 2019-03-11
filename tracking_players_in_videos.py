@@ -18,6 +18,7 @@ NUM_CLASSES = 1
 GLOBAL_SEARCH = False
 DISAPPEAR_THRESHOLD = 5
 QUALITY_THRESHOLD = 0.95
+NEAR_THRESHOLD = 0.5
 
 def load_tf_model(path_to_model):
     """Load a (frozen) Tensorflow model into memory.
@@ -98,6 +99,24 @@ def save_tracklets(tracklets:[tracklet.Tracklet]):
     np.savetxt("points.csv", p, delimiter=",", fmt='%s')
 
 
+def find_nearest_detection(origin, detections, threshold=NEAR_THRESHOLD):
+    nearest_dis = None
+    nearest_detection = None
+    for d in detections:
+        point = d.location
+        dis = tools.calc_distance_between_2_vectors(origin, point)
+        if nearest_dis is None:
+            nearest_dis = dis
+            nearest_detection = d
+            continue
+        if dis < nearest_dis:
+            nearest_dis = dis
+            nearest_detection = d
+    if nearest_detection is not None:
+        if nearest_dis > threshold * nearest_detection.width:
+            nearest_detection = None
+    return nearest_detection
+
 
 def main():
     detection_graph = load_tf_model(PATH_TO_MODEL)
@@ -117,7 +136,6 @@ def main():
 
     for image_np in video:
         progress += 1
-
 
         feat_cnn, boxes, scores, classes, _ = detecting(
             image_tensor,
@@ -173,11 +191,15 @@ def main():
         detections_left_index = [x for x in range(0, len(detections)) if not x in det_index or x in low_quality_det_index]
 
         if tracklets_left_index:
-            disappear_trklets = []
+            disappear_tracklets = []
             for t in tracklets_left_index:
+                origin = tracklets[t].predict()
+                foreground_detection = find_nearest_detection(origin, detections)
+                if foreground_detection is not None and detections.index(foreground_detection) not in detections_left_index:
+                    tracklets[t].add_foreground_detection(foreground_detection)
                 if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
-                    disappear_trklets.append(tracklets[t])
-            for t in disappear_trklets:
+                    disappear_tracklets.append(tracklets[t])
+            for t in disappear_tracklets:
                 tracklets.remove(t)
 
         if detections_left_index:

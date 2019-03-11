@@ -22,13 +22,20 @@ class Tracklet:
         self.quality = 0.5 * (self.quality + score)
         self.ss.correct(detection.location, 1)
 
+
+    def add_foreground_detection(self, detection):
+        self.points.append(detection.location)
+        self.disappear = 0
+        self.ss.correct(detection.location, 1)
+
+
     def vanish(self):
         self.disappear += 1
         return self.disappear
 
     def predict(self):
         return self.points[-1]
-        #return self.ss.predict() / 100.
+        # return self.ss.predict() / 100.
 
 
 
