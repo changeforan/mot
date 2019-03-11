@@ -1,6 +1,7 @@
 import numpy as np
 from . import kalman_filter
 
+
 class Tracklet:
     def __init__(self, point, feat_cnn, feat_sim, id, disappear=0, quality=1):
         self.color = np.random.randint(30)
@@ -11,7 +12,7 @@ class Tracklet:
         self.disappear = disappear
         self.quality = quality
         self.ss = kalman_filter.KalmanFilter()
-        self.ss.correct(point, 1)
+        self.ss.correct([point[0] * 100, point[1] * 100], 1)
 
     def add_detection(self, detection, score):
         self.points.append(detection.location)
@@ -26,7 +27,7 @@ class Tracklet:
         return self.disappear
 
     def predict(self):
-        return self.ss.predict()
+        return self.ss.predict() / 100.
 
 
 

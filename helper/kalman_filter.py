@@ -18,13 +18,13 @@ class KalmanFilter(object):
         """
         self.dt = .05   # delta time
 
-        self.H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])# matrix in observation equations, measurement function A ==> for H
-        self.x = np.zeros((4, 1))# previous state vector, state mean know as x, u ==> for x
+        self.H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])  # matrix in observation equations, measurement function A ==> for H
+        self.x = np.zeros((4, 1))  # previous state vector, state mean know as x, u ==> for x
 
         # (x,y) tracking object center
-        self.z = np.array([[1], [0]])# vector of observations, measurement matrix , b ==> for z
+        self.z = np.array([[1], [0]])  # vector of observations, measurement matrix , b ==> for z
 
-        self.P = np.diag((3.0, 3.0, 3.0, 3.0)) * 1000# covariance matrix
+        self.P = np.diag((3.0, 3.0, 3.0, 3.0)) * 1000  # covariance matrix
 
         self.F = np.array([[1, 0, self.dt, 0],
                            [0, 1, 0, self.dt],
@@ -116,10 +116,10 @@ class KalmanFilter(object):
 
 if __name__ == '__main__':
     SS = KalmanFilter()
-    z = [(1,1), (2,2), (3,3), (4,2), (5,1)]
+    z = [(0.1,0.1), (0.2,0.2), (0.3,0.3), (0.4,0.2), (0.5,0.1)]
     for i in range(len(z)) :
         print('ordem',i)
-        Correct = SS.correct([z[i][0], z[i][1]], 1)
-        Predict = SS.predict()
+        Correct = SS.correct([z[i][0] * 100, z[i][1] * 100], 1)
+        Predict = SS.predict() / 100.
         print ("Predict :", Predict)
         print("")
