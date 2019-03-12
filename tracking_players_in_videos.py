@@ -74,7 +74,7 @@ def get_new_detections(boxes, scores, image_np, siamese_model):
     for box in detected_boxes:
         location = tools.get_point(box)
         width = tools.get_width(box)
-        player_img = tools.get_player_img(box, image_np)
+        player_img = tools.get_player_img(box, image_np, True)
         feat_cnn = [1, 1, 1, 1]
         feat_sim = np.squeeze(siamese_model.run(player_img))
         detections.append(detection.Detection(location, feat_cnn, feat_sim, width, box))

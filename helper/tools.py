@@ -37,9 +37,11 @@ def get_width(box):
     return abs(box[3] - box[1])
 
 
-def get_player_img(box, image_np):
+def get_player_img(box, image_np, small=False):
     im_width, im_height, _ = image_np.shape
     ymin, xmin, ymax, xmax = box
     player_img = image_np[int(im_width * ymin): int(im_width * ymax) + 1,
                           int(im_height * xmin): int(im_height * xmax) + 1]
-    return cv2.resize(player_img, (56, 56))
+    if small:
+        cv2.resize(player_img, (28, 28))
+    return cv2.resize(player_img, (128, 128))
