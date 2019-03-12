@@ -21,10 +21,10 @@ NEAR_THRESHOLD = 1.
 
 
 def visualize_boxes_and_labels(image_np,
-                               boxes,
-                               classes,
-                               scores,
-                               category_index):
+                                 boxes,
+                                 classes,
+                                 scores,
+                                 category_index):
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         np.squeeze(boxes),
@@ -81,30 +81,20 @@ def get_new_detections(boxes, scores, image_np, siamese_model):
     return detections
 
 def tracking(args):
-
     video = video_util.open_video(args.video, args.max_frame)
-
     progress = 0
-
     # the tracklet set at time T-1
     tracklets = []
-
     # the detector
     player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
-
     # the siamese network model for extracting feat_sim
     siamese_model = siamese_network.Siamese()
-
     image_np_list = []
-
     for image_np in video:
         progress += 1
-
         feature_map, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
-
         # the detection set at time T
         detections = get_new_detections(boxes, scores, image_np, siamese_model)
-
         # construct similarity matrix S
         S = np.array([])
         try:
@@ -119,29 +109,23 @@ def tracking(args):
                                                    len(tracklets) + 1
                                                    ))
             continue
-
         print(str(progress) + ': ' + str(S.shape))
-
         # the Hungarian algorithm
         trk_index, det_index = linear_sum_assignment(1. - S)
-
         low_quality_trk_index = []
         low_quality_det_index = []
-
         for i, j in zip(trk_index, det_index):
             if S[i, j] < tracklets[i].quality * QUALITY_THRESHOLD:
                 low_quality_trk_index.append(i)
                 low_quality_det_index.append(j)
                 continue
             tracklets[i].add_detection(detections[j], S[i, j])
-
         tracklets_left_index = [x for x in range(0, len(tracklets))
                                 if not x in trk_index
                                 or x in low_quality_trk_index]
         detections_left_index = [x for x in range(0, len(detections))
                                  if not x in det_index
                                  or x in low_quality_det_index]
-
         if tracklets_left_index:
             disappear_tracklets = []
             for t in tracklets_left_index:
@@ -154,7 +138,6 @@ def tracking(args):
                     disappear_tracklets.append(tracklets[t])
             for t in disappear_tracklets:
                 tracklets.remove(t)
-
         if detections_left_index:
             for d in detections_left_index:
                 tracklets.append(tracklet.Tracklet(detections[d].location,
@@ -166,11 +149,8 @@ def tracking(args):
         visualize_boxes_and_labels(image_np, boxes, classes, scores, player_detector.category_index)
         visualize_tracklets(image_np, tracklets)
         image_np_list.append(image_np)
-
     player_detector.sess_end()
-
     video_util.save_video(args.output, image_np_list)
-
 
 
 def main():
