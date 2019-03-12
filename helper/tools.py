@@ -9,9 +9,7 @@ def calc_distance_between_2_vectors(v1, v2):
 
 def load_image_into_numpy_array(image):
     (im_width, im_height) = image.size
-    return np.array(image.getdata()).reshape(
-        (im_height, im_width, 3)
-    ).astype(np.uint8)
+    return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
 
 def get_all_detected_boxes(original_boxes,
                            scores,
@@ -37,8 +35,9 @@ def get_player_img(box, image_np):
     ymin, xmin, ymax, xmax = box
     player_img = image_np[
         int(im_width * ymin) : int(im_width * ymax) + 1,
-        int(im_height * xmin) : int(im_height * xmax) + 1
-    ]
+        int(im_height * xmin) : int(im_height * xmax) + 1]
     return cv2.resize(player_img, (28, 28))
+
+
 
     
