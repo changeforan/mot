@@ -8,6 +8,7 @@ from helper import tools, video_util, detection, tracklet
 import construct_similarity_matrix
 import detector
 import argparse
+import cv2
 
 PATH_TO_MODEL = os.path.join('save_models', 'faster_rcnn', 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join('player_label.txt')
@@ -43,7 +44,7 @@ def visualize_tracklets(image_np, tracklets):
         line_thickness=8)
 
 
-def save_tracklets(tracklets:[tracklet.Tracklet]):
+def save_tracklets(tracklets: [tracklet.Tracklet]):
     p = [t.points for t in tracklets]
     np.savetxt("points.csv", p, delimiter=",", fmt='%s')
 
@@ -67,7 +68,6 @@ def find_nearest_detection(origin, detections, threshold=NEAR_THRESHOLD):
     return nearest_detection
 
 
-
 def get_new_detections(boxes, scores, image_np, siamese_model):
     detections = []
     detected_boxes = tools.get_all_detected_boxes(boxes, scores)
@@ -77,8 +77,19 @@ def get_new_detections(boxes, scores, image_np, siamese_model):
         player_img = tools.get_player_img(box, image_np)
         feat_cnn = [1, 1, 1, 1]
         feat_sim = np.squeeze(siamese_model.run(player_img))
-        detections.append(detection.Detection(location, feat_cnn, feat_sim, width))
+        detections.append(detection.Detection(location, feat_cnn, feat_sim, width, box))
     return detections
+
+
+def save_player_img(video_path, tracklet_id, img, img_id):
+    video_name = str(video_path).split('/')[-1]
+    if not os.path.exists(video_name):
+        os.mkdir(video_name)
+    if not os.path.exists(video_name + '/' + tracklet_id):
+        os.mkdir(video_name + '/' + tracklet_id)
+    cv2.imwrite(video_name + '/' + tracklet_id + '/' + img_id + '.jpg', img)
+
+
 
 def tracking(args):
     video = video_util.open_video(args.video, args.max_frame)
@@ -120,11 +131,17 @@ def tracking(args):
                 low_quality_det_index.append(j)
                 continue
             tracklets[i].add_detection(detections[j], S[i, j])
+            if args.save_player_img:
+                save_player_img(
+                    args.video,
+                    str(tracklets[i].id),
+                    tools.get_player_img(detections[j].box, image_np),
+                    str(len(tracklets[i].points)))
         tracklets_left_index = [x for x in range(0, len(tracklets))
-                                if not x in trk_index
+                                if x not in trk_index
                                 or x in low_quality_trk_index]
         detections_left_index = [x for x in range(0, len(detections))
-                                 if not x in det_index
+                                 if x not in det_index
                                  or x in low_quality_det_index]
         if tracklets_left_index:
             disappear_tracklets = []
@@ -170,6 +187,11 @@ def main():
         type=int,
         default=-1,
         dest='max_frame'
+    )
+    parser.add_argument(
+        '--save_player_img',
+        action='store_true',
+        default=False
     )
     args = parser.parse_args()
     tracking(args)
