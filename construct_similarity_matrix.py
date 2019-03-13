@@ -2,7 +2,7 @@ from helper import detection, tracklet
 import numpy as np
 import math
 
-w_1 = .2
+w_1 = .0
 w_2 = 1.
 w_3 = 1.2
 
