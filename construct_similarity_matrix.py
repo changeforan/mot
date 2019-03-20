@@ -72,4 +72,3 @@ def get_similarity_matrix(tracklets:[tracklet.Tracklet], detections:[detection.D
     C = get_cnn_matrix(tracklets, detections)
     A = get_app_matrix(tracklets, detections)
     return np.multiply(M, C, A)
-
