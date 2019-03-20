@@ -139,6 +139,7 @@ def tracking(args):
         detections_left_index = [x for x in range(0, len(detections))
                                  if x not in det_index
                                  or x in low_quality_det_index]
+
         if tracklets_left_index:
             disappear_tracklets = []
             for t in tracklets_left_index:
