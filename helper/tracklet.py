@@ -35,7 +35,11 @@ class Tracklet:
         return [x.location for x in self.detections]
 
     def get_feat_cnn(self):
+        if len(self.detections) == 1:
+            return self.detections[0].feat_cnn
         return np.mean([x.feat_cnn for x in self.detections], axis=1)
 
     def get_feat_sim(self):
+        if len(self.detections) == 1:
+            return self.detections[0].feat_sim
         return np.mean([x.feat_sim for x in self.detections], axis=1)
