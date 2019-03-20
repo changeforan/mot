@@ -82,7 +82,7 @@ def get_new_detections(boxes, scores, image_np, siamese_model):
 
 
 def save_player_img(video_path, tracklet_id, img, img_id):
-    video_name = str(video_path).split('/')[-1]
+    video_name = str(str(video_path).split('/')[-1]).split('.')[0]
     if not os.path.exists(video_name):
         os.mkdir(video_name)
     if not os.path.exists(video_name + '/' + tracklet_id):

@@ -5,9 +5,10 @@
 *.egg-info
 *.avi
 *.mkv
-save_models
-dist
-build
+save_models/
+dist/
+build/
+data/
 
 # IDE:
 .idea/
