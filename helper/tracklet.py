@@ -1,32 +1,26 @@
 import numpy as np
 from . import kalman_filter
-
+from . import detection
 
 class Tracklet:
-    def __init__(self, point, feat_cnn, feat_sim, id, disappear=0, quality=1):
+    def __init__(self, det:detection.Detection, id:int, disappear=0):
         self.color = np.random.randint(30)
-        self.points = [point]
-        self.last_feat_cnn = feat_cnn
-        self.last_feat_sim = feat_sim
+        self.detections = [det]
         self.id = id
         self.disappear = disappear
-        self.quality = quality
         self.ss = kalman_filter.KalmanFilter()
-        self.ss.correct([point[0] * 100, point[1] * 100], 1)
+        #self.ss.correct([point[0] * 100, point[1] * 100], 1)
 
-    def add_detection(self, detection, score):
-        self.points.append(detection.location)
-        self.last_feat_cnn = detection.feat_cnn
-        self.last_feat_sim = detection.feat_sim
+    def add_detection(self, det):
+        self.detections.append(det)
         self.disappear = 0
-        self.quality = 0.5 * (self.quality + score)
-        self.ss.correct(detection.location, 1)
+        #self.ss.correct(detection.location, 1)
 
 
-    def add_foreground_detection(self, detection):
-        self.points.append(detection.location)
+    def add_foreground_detection(self, det):
+        self.detections.append(det)
         self.disappear = 0
-        self.ss.correct(detection.location, 1)
+        #self.ss.correct(detection.location, 1)
 
 
     def vanish(self):
@@ -34,8 +28,14 @@ class Tracklet:
         return self.disappear
 
     def predict(self):
-        return self.points[-1]
+        return self.detections[-1].location
         # return self.ss.predict() / 100.
 
+    def get_points(self):
+        return [x.location for x in self.detections]
 
+    def get_feat_cnn(self):
+        return np.mean([x.feat_cnn for x in self.detections], axis=1)
 
+    def get_feat_sim(self):
+        return np.mean([x.feat_sim for x in self.detections], axis=1)

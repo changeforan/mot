@@ -3,8 +3,8 @@ import numpy as np
 import math
 
 w_1 = .2
-w_2 = 1.
-w_3 = 1.2
+w_2 = 1.0
+w_3 = 1.0
 
 
 class TrackletsEmpty(Exception):
@@ -45,20 +45,20 @@ def get_mot_matrix(tracklets:[tracklet.Tracklet], detections:[detection.Detectio
 def get_cnn_matrix(tracklets: [tracklet.Tracklet], detections: [detection.Detection]):
     cnn = np.empty((len(tracklets), len(detections)))
     for i in range(0, len(tracklets)):
-        last_feat_cnn = tracklets[i].last_feat_cnn
+        trk_feat_cnn = tracklets[i].get_feat_cnn()
         for j in range(0, len(detections)):
             feat_cnn = detections[j].feat_cnn
-            cnn[i][j] = w_2 * calc_cosine_similarity(last_feat_cnn, feat_cnn)
+            cnn[i][j] = w_2 * calc_cosine_similarity(trk_feat_cnn, feat_cnn)
     return cnn
 
 
 def get_app_matrix(tracklets: [tracklet.Tracklet], detections: [detection.Detection]):
     app = np.empty((len(tracklets), len(detections)))
     for i in range(0, len(tracklets)):
-        last_feat_sim = tracklets[i].last_feat_sim
+        trk_feat_sim = tracklets[i].get_feat_sim()
         for j in range(0, len(detections)):
             feat_sim = detections[j].feat_sim
-            app[i][j] = w_3 * calc_cosine_similarity(last_feat_sim, feat_sim)
+            app[i][j] = w_3 * calc_cosine_similarity(trk_feat_sim, feat_sim)
     return app
 
 
