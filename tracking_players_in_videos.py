@@ -92,12 +92,11 @@ def save_player_img(video_path, tracklet_id, img, img_id):
 
 def get_target_detection(obj, detections):
     gt_bbox = [obj[0], obj[1], obj[0] + obj[3], obj[0] + obj[2]]
-    print(detections)
-    ious = bbox_tools.bbox_iou(np.ndarray([gt_bbox]), np.ndarray([d.box for d in detections]))
-    print(ious.shape)
-    index = np.argmax(ious)
+    IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]), np.array([d.box for d in detections]))
+    print(IoUs.shape)
+    index = np.argmax(IoUs)
     print(detections[index].box)
-    print(ious[0, index])
+    print(IoUs[0, index])
 
 
 
