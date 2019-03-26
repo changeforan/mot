@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from object_detection.utils import visualization_utils as vis_util
 from siamese import siamese_network
-from helper import tools, video_util, detection, tracklet
+from helper import tools, detection, tracklet, img_reader, bbox_tools
 import construct_similarity_matrix
 import detector
 import argparse
@@ -90,9 +90,19 @@ def save_player_img(video_path, tracklet_id, img, img_id):
     cv2.imwrite(video_name + '/' + tracklet_id + '/' + img_id + '.jpg', img)
 
 
+def get_target_detection(obj, detections):
+    gt_bbox = [obj[0], obj[1], obj[0] + obj[3], obj[0] + obj[2]]
+    ious = bbox_tools.bbox_iou(np.ndarray([gt_bbox]), np.ndarray([d.box for d in detections]))
+    print(ious.shape)
+    index = np.argmax(ious)
+    print(detections[index].box)
+    print(ious[0, index])
+
+
 
 def tracking(args):
-    video = video_util.open_video(args.video, args.max_frame)
+    img_set = img_reader.open_path(args.path, 40, 376)
+    obj = (132, 256, 18, 42)
     progress = 0
     # the tracklet set at time T-1
     tracklets = []
@@ -100,12 +110,14 @@ def tracking(args):
     player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
     # the siamese network model for extracting feat_sim
     siamese_model = siamese_network.Siamese()
-    image_np_list = []
-    for image_np in video:
+    result_img = []
+    for image_np in img_set:
         progress += 1
-        feature_map, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
+        _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
         # the detection set at time T
         detections = get_new_detections(boxes, scores, image_np, siamese_model)
+        target = get_target_detection(obj, detections)
+        return
         # construct similarity matrix S
         S = np.array([])
         try:
@@ -116,7 +128,7 @@ def tracking(args):
             for d in detections:
                 tracklets.append(tracklet.Tracklet(d, len(tracklets) + 1))
             continue
-        print(str(progress) + ': ' + str(S.shape))
+
         # the Hungarian algorithm
         trk_index, det_index = linear_sum_assignment(1. - S)
         low_quality_trk_index = []
@@ -158,28 +170,22 @@ def tracking(args):
 
         visualize_boxes_and_labels(image_np, boxes, classes, scores, player_detector.category_index)
         visualize_tracklets(image_np, tracklets)
-        image_np_list.append(image_np)
+        result_img.append(image_np)
     player_detector.sess_end()
-    video_util.save_video(args.output, image_np_list)
+    video_util.save_video(args.output, result_img)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--video',
+        '--input',
         required=True,
-        dest='video'
+        dest='input'
     )
     parser.add_argument(
         '--output',
         dest='output',
-        default='out.avi'
-    )
-    parser.add_argument(
-        '--max_frame',
-        type=int,
-        default=-1,
-        dest='max_frame'
+        default='./out'
     )
     parser.add_argument(
         '--save_player_img',
