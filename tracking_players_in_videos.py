@@ -95,6 +95,7 @@ def get_target_detection(obj, detections):
     IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]), np.array([d.box for d in detections]))
     print(IoUs.shape)
     index = np.argmax(IoUs)
+    print(np.argmax(IoUs))
     print(detections[index].box)
     print(IoUs[0, index])
 
@@ -104,7 +105,7 @@ def tracking(args):
     img_set = img_reader.open_path(args.input, 40, 376)
     width = 624
     height = 352
-    obj = (132 / width, 256 / height, 18 /width, 42 /height)
+    obj = (132 / width, 256 / height, 18 / width, 42 / height)
     progress = 0
     # the tracklet set at time T-1
     tracklets = []
