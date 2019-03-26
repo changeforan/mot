@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from object_detection.utils import visualization_utils as vis_util
 from siamese import siamese_network
-from helper import tools, detection, tracklet, img_reader, bbox_tools
+from helper import tools, detection, tracklet, img_reader, bbox_tools, video_util
 import construct_similarity_matrix
 import detector
 import argparse
@@ -17,12 +17,13 @@ NUM_CLASSES = 1
 
 # Thresholds
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.95
+QUALITY_THRESHOLD = 0.9
 NEAR_THRESHOLD = 1.0
 
 
 width = 624
 height = 352
+
 
 def visualize_boxes_and_labels(image_np,
                                boxes,
@@ -31,12 +32,14 @@ def visualize_boxes_and_labels(image_np,
                                category_index):
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
-        np.squeeze(boxes),
+        boxes,
         np.squeeze(classes).astype(np.int32),
-        np.squeeze(scores),
+        scores,
         category_index,
         use_normalized_coordinates=True,
-        line_thickness=8)
+        line_thickness=2,
+        skip_labels=True,
+        skip_scores=True)
 
 
 def visualize_tracklets(image_np, tracklets):
@@ -44,12 +47,16 @@ def visualize_tracklets(image_np, tracklets):
         image_np,
         tracklets,
         use_normalized_coordinates=True,
-        line_thickness=8)
+        line_thickness=4)
 
 
 def save_tracklets(tracklets: [tracklet.Tracklet]):
-    p = [t.points for t in tracklets]
-    np.savetxt("points.csv", p, delimiter=",", fmt='%s')
+    det_bbox = [[d.box[1] * width,
+                 d.box[0] * height,
+                 (d.box[3] - d.box[1]) * width,
+                 (d.box[2] - d.box[0]) * height] for d in tracklets[0].detections]
+    for b in det_bbox:
+        print(*b)
 
 
 def find_nearest_detection(origin, detections, threshold=NEAR_THRESHOLD):
@@ -94,22 +101,20 @@ def save_player_img(video_path, tracklet_id, img, img_id):
 
 
 def get_target_detection(obj, detections):
-    gt_bbox = [obj[1], obj[0], obj[0] + obj[3], obj[0] + obj[2]]
+    gt_bbox = [obj[0], obj[1], obj[0] + obj[2], obj[1] + obj[3]]
     det_bbox = [[d.box[1] * width,
                  d.box[0] * height,
                  d.box[3] * width,
                  d.box[2] * height] for d in detections]
     IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),np.array(det_bbox))
     index = np.argmax(IoUs[0])
-    print(np.max(IoUs[0]))
-    print(detections[index].box)
-    print(IoUs[0, index])
-
+    # print(IoUs[0, index])
+    return detections[index]
 
 
 def tracking(args):
-    img_set = img_reader.open_path(args.input, 40, 376)
-    obj = (132, 256, 18, 42)
+    img_set = img_reader.open_path(args.input, 47, 60)
+    obj = (154 ,248, 13, 38)
     progress = 0
     # the tracklet set at time T-1
     tracklets = []
@@ -123,8 +128,10 @@ def tracking(args):
         _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
         # the detection set at time T
         detections = get_new_detections(boxes, scores, image_np, siamese_model)
-        target = get_target_detection(obj, detections)
-        return
+        if progress == 1:
+            target = get_target_detection(obj, detections)
+            tracklets.append(tracklet.Tracklet(target, 1))
+        print(progress)
         # construct similarity matrix S
         S = np.array([])
         try:
@@ -132,9 +139,10 @@ def tracking(args):
         except construct_similarity_matrix.DetectionsEmpty:
             continue
         except construct_similarity_matrix.TrackletsEmpty:
-            for d in detections:
-                tracklets.append(tracklet.Tracklet(d, len(tracklets) + 1))
-            continue
+            break
+            # for d in detections:
+            #     tracklets.append(tracklet.Tracklet(d, len(tracklets) + 1))
+            # continue
 
         # the Hungarian algorithm
         trk_index, det_index = linear_sum_assignment(1. - S)
@@ -152,9 +160,11 @@ def tracking(args):
                     str(tracklets[i].id),
                     tools.get_player_img(detections[j].box, image_np),
                     str(len(tracklets[i].detections)))
+
         tracklets_left_index = [x for x in range(0, len(tracklets))
                                 if x not in trk_index
                                 or x in low_quality_trk_index]
+
         detections_left_index = [x for x in range(0, len(detections))
                                  if x not in det_index
                                  or x in low_quality_det_index]
@@ -171,15 +181,17 @@ def tracking(args):
                     disappear_tracklets.append(tracklets[t])
             for t in disappear_tracklets:
                 tracklets.remove(t)
-        if detections_left_index:
-            for d in detections_left_index:
-                tracklets.append(tracklet.Tracklet(detections[d], len(tracklets) + 1))
 
-        visualize_boxes_and_labels(image_np, boxes, classes, scores, player_detector.category_index)
+        # if detections_left_index:
+        #     for d in detections_left_index:
+        #         tracklets.append(tracklet.Tracklet(detections[d], len(tracklets) + 1))
+
+        visualize_boxes_and_labels(image_np, np.array([tracklets[0].detections[-1].box]), classes, np.array([0.9999]), player_detector.category_index)
         visualize_tracklets(image_np, tracklets)
         result_img.append(image_np)
     player_detector.sess_end()
     video_util.save_video(args.output, result_img)
+    save_tracklets(tracklets)
 
 
 def main():
@@ -192,7 +204,7 @@ def main():
     parser.add_argument(
         '--output',
         dest='output',
-        default='./out'
+        default='out.avi'
     )
     parser.add_argument(
         '--save_player_img',
