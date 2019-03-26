@@ -103,8 +103,8 @@ def get_target_detection(obj, detections):
         print(b)
     IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),np.array(det_bbox))
     print(IoUs.shape)
-    index = np.argmax(IoUs)
-    print(np.max(IoUs))
+    index = np.argmax(IoUs, 1)
+    print(np.max(IoUs, 1))
     print(detections[index].box)
     print(IoUs[0, index])
 
