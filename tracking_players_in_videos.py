@@ -21,6 +21,9 @@ QUALITY_THRESHOLD = 0.95
 NEAR_THRESHOLD = 1.0
 
 
+width = 624
+height = 352
+
 def visualize_boxes_and_labels(image_np,
                                boxes,
                                classes,
@@ -92,10 +95,16 @@ def save_player_img(video_path, tracklet_id, img, img_id):
 
 def get_target_detection(obj, detections):
     gt_bbox = [obj[1], obj[0], obj[0] + obj[3], obj[0] + obj[2]]
-    IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]), np.array([d.box for d in detections]))
+    for d in detections:
+        print(d.box[0] * height, d.box[1] * width, d.box[2] * height, d.box[3] * width)
+    IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),
+                               np.array([[d.box[0] * height,
+                                          d.box[1] * width,
+                                          d.box[2] * height,
+                                          d.box[3] * width] for d in detections]))
     print(IoUs.shape)
     index = np.argmax(IoUs)
-    print(np.argmax(IoUs))
+    print(np.max(IoUs))
     print(detections[index].box)
     print(IoUs[0, index])
 
@@ -103,9 +112,7 @@ def get_target_detection(obj, detections):
 
 def tracking(args):
     img_set = img_reader.open_path(args.input, 40, 376)
-    width = 624
-    height = 352
-    obj = (132 / width, 256 / height, 18 / width, 42 / height)
+    obj = (132, 256, 18, 42)
     progress = 0
     # the tracklet set at time T-1
     tracklets = []
