@@ -101,7 +101,7 @@ def get_target_detection(obj, detections):
 
 
 def tracking(args):
-    img_set = img_reader.open_path(args.path, 40, 376)
+    img_set = img_reader.open_path(args.input, 40, 376)
     obj = (132, 256, 18, 42)
     progress = 0
     # the tracklet set at time T-1
