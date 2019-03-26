@@ -21,8 +21,8 @@ QUALITY_THRESHOLD = 0.95
 NEAR_THRESHOLD = 1.0
 
 
-width = 624
-height = 352
+width = 352
+height = 624
 
 def visualize_boxes_and_labels(image_np,
                                boxes,
