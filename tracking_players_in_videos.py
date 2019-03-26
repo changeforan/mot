@@ -21,8 +21,8 @@ QUALITY_THRESHOLD = 0.95
 NEAR_THRESHOLD = 1.0
 
 
-width = 352
-height = 624
+width = 624
+height = 352
 
 def visualize_boxes_and_labels(image_np,
                                boxes,
@@ -95,13 +95,13 @@ def save_player_img(video_path, tracklet_id, img, img_id):
 
 def get_target_detection(obj, detections):
     gt_bbox = [obj[1], obj[0], obj[0] + obj[3], obj[0] + obj[2]]
-    for d in detections:
-        print(d.box[0] * height, d.box[1] * width, d.box[2] * height, d.box[3] * width)
-    IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),
-                               np.array([[d.box[0] * height,
-                                          d.box[1] * width,
-                                          d.box[2] * height,
-                                          d.box[3] * width] for d in detections]))
+    det_bbox = [[d.box[1] * width,
+                 d.box[0] * height,
+                 d.box[3] * width,
+                 d.box[2] * height] for d in detections]
+    for b in det_bbox:
+        print(b)
+    IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),np.array(det_bbox))
     print(IoUs.shape)
     index = np.argmax(IoUs)
     print(np.max(IoUs))
