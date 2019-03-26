@@ -91,7 +91,7 @@ def save_player_img(video_path, tracklet_id, img, img_id):
 
 
 def get_target_detection(obj, detections):
-    gt_bbox = [obj[0], obj[1], obj[0] + obj[3], obj[0] + obj[2]]
+    gt_bbox = [obj[1], obj[0], obj[0] + obj[3], obj[0] + obj[2]]
     IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]), np.array([d.box for d in detections]))
     print(IoUs.shape)
     index = np.argmax(IoUs)
@@ -102,7 +102,9 @@ def get_target_detection(obj, detections):
 
 def tracking(args):
     img_set = img_reader.open_path(args.input, 40, 376)
-    obj = (132, 256, 18, 42)
+    width = 624
+    height = 352
+    obj = (132 / width, 256 / height, 18 /width, 42 /height)
     progress = 0
     # the tracklet set at time T-1
     tracklets = []
