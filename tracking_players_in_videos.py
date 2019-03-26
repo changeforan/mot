@@ -99,12 +99,9 @@ def get_target_detection(obj, detections):
                  d.box[0] * height,
                  d.box[3] * width,
                  d.box[2] * height] for d in detections]
-    for b in det_bbox:
-        print(b)
     IoUs = bbox_tools.bbox_iou(np.array([gt_bbox]),np.array(det_bbox))
-    print(IoUs.shape)
-    index = np.argmax(IoUs, 1)
-    print(np.max(IoUs, 1))
+    index = np.argmax(IoUs[0])
+    print(np.max(IoUs[0]))
     print(detections[index].box)
     print(IoUs[0, index])
 
