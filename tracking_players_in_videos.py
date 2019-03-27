@@ -191,10 +191,8 @@ def tracking(args):
                             tracklets[t].add_foreground_detection(foreground_detection)
                         if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
                             disappear_tracklets.append(tracklets[t])
-                    for t in disappear_tracklets:
-                        tracklets.remove(t)
-                if not tracklets:
-                    break
+                    if disappear_tracklets:
+                        break
                 visualize_boxes_and_labels(image_np,
                                            np.array([tracklets[0].detections[-1].box]),
                                            classes,
