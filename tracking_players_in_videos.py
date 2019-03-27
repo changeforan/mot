@@ -217,7 +217,8 @@ def tracking(args):
         player_detector.sess_end()
         video_util.save_video(args.output, result_img)
         det_bbox = save_tracklets(tracklets)
-        det_bbox = resize_det_bbox(obj, det_bbox)
+        if args.resize:
+            det_bbox = resize_det_bbox(obj, det_bbox)
         print(calc_AUC(gt_bbox, det_bbox))
 
 
@@ -242,6 +243,11 @@ def main():
     )
     parser.add_argument(
         '--save_player_img',
+        action='store_true',
+        default=False
+    )
+    parser.add_argument(
+        '--resize',
         action='store_true',
         default=False
     )
