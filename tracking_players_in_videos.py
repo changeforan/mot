@@ -19,7 +19,7 @@ NUM_CLASSES = 1
 # Thresholds
 DISAPPEAR_THRESHOLD = 5
 QUALITY_THRESHOLD = 0.8
-NEAR_THRESHOLD = 1.0
+NEAR_THRESHOLD = 2.0
 
 
 width = 624
@@ -111,7 +111,7 @@ def calc_AUC(gt_bbox, det_bbox):
     det_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in det_bbox]
     IoUs = bbox_tools.bbox_iou(np.array(gt_bbox), np.array(det_bbox))
     IoUs = np.diag(IoUs[ :len(det_bbox), :])
-    sp = [np.count_nonzero(IoUs >= x / 100) / len(det_bbox) for x in range(0, 100)]
+    sp = [np.count_nonzero(IoUs >= x / 100) / len(gt_bbox) for x in range(0, 100)]
     auc = np.sum(np.multiply(sp, 0.01))
     return auc, sp
 
@@ -186,8 +186,7 @@ def tracking(args):
                     for t in tracklets_left_index:
                         origin = tracklets[t].predict()
                         foreground_detection = find_nearest_detection(origin, detections)
-                        if foreground_detection is not None and detections.index(
-                                foreground_detection) not in detections_left_index:
+                        if foreground_detection is not None :
                             tracklets[t].add_foreground_detection(foreground_detection)
                         if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
                             disappear_tracklets.append(tracklets[t])
