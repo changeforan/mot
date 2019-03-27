@@ -202,9 +202,8 @@ def tracking(args):
                                            player_detector.category_index)
                 visualize_tracklets(image_np, tracklets)
                 result_img.append(image_np)
-            print('Total frames %s, complete %s, end at %s. ' % (end - begin + 1, progress - begin + 1, progress), end='')
+            print('Total frames %s, tracked %s, end at #%s. ' % (end - begin + 1, progress - begin + 1, progress), end='')
             total_frames += end - begin + 1
-            player_detector.sess_end()
             det_bbox = save_tracklets(tracklets)
             if args.resize:
                 det_bbox = resize_det_bbox(obj, det_bbox)
@@ -214,6 +213,7 @@ def tracking(args):
     success_rate = success_rate / total_frames
     for i in success_rate:
         print(i)
+    player_detector.sess_end()
 
 
 
