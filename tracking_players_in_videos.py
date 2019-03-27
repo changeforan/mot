@@ -55,8 +55,9 @@ def save_tracklets(tracklets: [tracklet.Tracklet]):
                  d.box[0] * height,
                  (d.box[3] - d.box[1]) * width,
                  (d.box[2] - d.box[0]) * height] for d in tracklets[0].detections]
-    for b in det_bbox:
-        print(*b)
+    # for b in det_bbox:
+    #     print(*b)
+    return det_bbox
 
 
 def find_nearest_detection(origin, detections, threshold=NEAR_THRESHOLD):
@@ -112,6 +113,18 @@ def get_target_detection(obj, detections):
     return detections[index]
 
 
+def calc_AUC(gt_bbox, det_bbox):
+    gt_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in gt_bbox]
+    det_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in det_bbox]
+    IoUs = bbox_tools.bbox_iou(np.array(gt_bbox), np.array(det_bbox))
+    IoUs = np.diag(IoUs[ :len(det_bbox), :])
+    sp = [[x / 100, np.count_nonzero(IoUs >= x / 100)] for x in range(0, 100)]
+    for i in sp:
+        print(*i)
+
+
+
+
 def tracking(args):
     gt_file = os.path.join(args.input, args.gt)
     with open(gt_file, 'r') as f:
@@ -119,7 +132,7 @@ def tracking(args):
         gt_bbox = [[int(x) for x in line.split()] for line in f]
         img_set = img_reader.open_path(args.input, begin, end)
         obj = gt_bbox[0]
-        progress = 0
+        progress = begin
         # the tracklet set at time T-1
         tracklets = []
         # the detector
@@ -128,14 +141,14 @@ def tracking(args):
         siamese_model = siamese_network.Siamese()
         result_img = []
         for image_np in img_set:
-            progress += 1
             _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
             # the detection set at time T
             detections = get_new_detections(boxes, scores, image_np, siamese_model)
-            if progress == 1:
+            if progress == begin:
                 target = get_target_detection(obj, detections)
                 tracklets.append(tracklet.Tracklet(target, 1))
-            print(progress)
+            progress += 1
+            print(progress, end='')
             # construct similarity matrix S
             S = np.array([])
             try:
@@ -192,7 +205,9 @@ def tracking(args):
             result_img.append(image_np)
         player_detector.sess_end()
         video_util.save_video(args.output, result_img)
-        save_tracklets(tracklets)
+        det_bbox = save_tracklets(tracklets)
+        calc_AUC(gt_bbox, det_bbox)
+
 
 
 def main():
