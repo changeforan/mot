@@ -126,6 +126,14 @@ def calc_AUC(gt_bbox, det_bbox):
     return auc
 
 
+def resize_det_bbox(obj, det_bbox):
+    det_bbox = [[
+        b[0] + 0.5 * (b[2] - obj[2]),
+        b[1] + 0.5 * (b[3] - obj[3]),
+        obj[2],
+        obj[3]
+    ] for b in det_bbox]
+    return det_bbox
 
 
 def tracking(args):
@@ -209,6 +217,7 @@ def tracking(args):
         player_detector.sess_end()
         video_util.save_video(args.output, result_img)
         det_bbox = save_tracklets(tracklets)
+        det_bbox = resize_det_bbox(obj, det_bbox)
         print(calc_AUC(gt_bbox, det_bbox))
 
 
