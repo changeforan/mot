@@ -213,7 +213,7 @@ def tracking(args):
                                        player_detector.category_index)
             visualize_tracklets(image_np, tracklets)
             result_img.append(image_np)
-        print(progress)
+        print(progress, progress - begin + 1)
         player_detector.sess_end()
         video_util.save_video(args.output, result_img)
         det_bbox = save_tracklets(tracklets)
