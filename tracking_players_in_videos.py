@@ -129,7 +129,7 @@ def tracking(args):
     total_frames = 0
     success_rate = np.zeros(100)
     for shot, gt in circumstance.circu_1:
-        print('%s, %s' % shot, gt)
+        print('%s, %s' % (shot, gt))
         img_path = os.path.join(args.input, shot)
         gt_file = os.path.join(img_path, gt)
         with open(gt_file, 'r') as f:
