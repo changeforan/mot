@@ -29,7 +29,7 @@ def visualize_boxes_and_labels(image_np,
                                boxes,
                                classes,
                                scores,
-                               category_index):
+                               category_index,):
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         boxes,
