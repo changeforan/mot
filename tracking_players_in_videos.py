@@ -126,6 +126,10 @@ def resize_det_bbox(obj, det_bbox):
 
 
 def tracking(args):
+    # the detector
+    player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
+    # the siamese network model for extracting feat_sim
+    siamese_model = siamese_network.Siamese()
     total_frames = 0
     success_rate = np.zeros(100)
     for shot, gt in circumstance.circu_1:
@@ -140,10 +144,6 @@ def tracking(args):
             progress = begin
             # the tracklet set at time T-1
             tracklets = []
-            # the detector
-            player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
-            # the siamese network model for extracting feat_sim
-            siamese_model = siamese_network.Siamese()
             result_img = []
             for image_np in img_set:
                 _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
@@ -202,8 +202,8 @@ def tracking(args):
                                            player_detector.category_index)
                 visualize_tracklets(image_np, tracklets)
                 result_img.append(image_np)
-            print('Total frames %s, complete %s, end at %s. ' % (begin - end + 1, progress - end + 1, progress), end='')
-            total_frames += begin - end + 1
+            print('Total frames %s, complete %s, end at %s. ' % (end - begin + 1, progress - begin + 1, progress), end='')
+            total_frames += end - begin + 1
             player_detector.sess_end()
             det_bbox = save_tracklets(tracklets)
             if args.resize:
