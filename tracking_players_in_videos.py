@@ -114,6 +114,7 @@ def get_target_detection(obj, detections):
 
 
 def calc_AUC(gt_bbox, det_bbox):
+    auc = 0.0
     gt_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in gt_bbox]
     det_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in det_bbox]
     IoUs = bbox_tools.bbox_iou(np.array(gt_bbox), np.array(det_bbox))
@@ -121,6 +122,8 @@ def calc_AUC(gt_bbox, det_bbox):
     sp = [[x / 100, np.count_nonzero(IoUs >= x / 100) / len(det_bbox)] for x in range(0, 100)]
     for i in sp:
         print(*i)
+        auc += 0.01 * i[1]
+    return auc
 
 
 
@@ -148,7 +151,6 @@ def tracking(args):
                 target = get_target_detection(obj, detections)
                 tracklets.append(tracklet.Tracklet(target, 1))
             progress += 1
-            print(progress, end='')
             # construct similarity matrix S
             S = np.array([])
             try:
@@ -203,10 +205,11 @@ def tracking(args):
                                        player_detector.category_index)
             visualize_tracklets(image_np, tracklets)
             result_img.append(image_np)
+        print(progress)
         player_detector.sess_end()
         video_util.save_video(args.output, result_img)
         det_bbox = save_tracklets(tracklets)
-        calc_AUC(gt_bbox, det_bbox)
+        print(calc_AUC(gt_bbox, det_bbox))
 
 
 
