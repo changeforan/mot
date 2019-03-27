@@ -132,7 +132,7 @@ def tracking(args):
     siamese_model = siamese_network.Siamese()
     total_frames = 0
     success_rate = np.zeros(100)
-    for shot, gt in circumstance.circu_2:
+    for shot, gt in circumstance.circu_3:
         print('%s, %s' % (shot, gt))
         img_path = os.path.join(args.input, shot)
         gt_file = os.path.join(img_path, gt)
