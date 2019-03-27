@@ -118,7 +118,7 @@ def calc_AUC(gt_bbox, det_bbox):
     det_bbox = [[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in det_bbox]
     IoUs = bbox_tools.bbox_iou(np.array(gt_bbox), np.array(det_bbox))
     IoUs = np.diag(IoUs[ :len(det_bbox), :])
-    sp = [[x / 100, np.count_nonzero(IoUs >= x / 100)] for x in range(0, 100)]
+    sp = [[x / 100, np.count_nonzero(IoUs >= x / 100) / len(det_bbox)] for x in range(0, 100)]
     for i in sp:
         print(*i)
 
