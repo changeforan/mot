@@ -17,7 +17,7 @@ NUM_CLASSES = 1
 
 # Thresholds
 DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.9
+QUALITY_THRESHOLD = 0.8
 NEAR_THRESHOLD = 1.0
 
 
@@ -121,7 +121,7 @@ def calc_AUC(gt_bbox, det_bbox):
     IoUs = np.diag(IoUs[ :len(det_bbox), :])
     sp = [[x / 100, np.count_nonzero(IoUs >= x / 100) / len(det_bbox)] for x in range(0, 100)]
     for i in sp:
-        print(*i)
+        # print(*i)
         auc += 0.01 * i[1]
     return auc
 
@@ -178,12 +178,6 @@ def tracking(args):
                     low_quality_det_index.append(j)
                     continue
                 tracklets[i].add_detection(detections[j])
-                if args.save_player_img:
-                    save_player_img(
-                        args.video,
-                        str(tracklets[i].id),
-                        tools.get_player_img(detections[j].box, image_np),
-                        str(len(tracklets[i].detections)))
 
             tracklets_left_index = [x for x in range(0, len(tracklets))
                                     if x not in trk_index
