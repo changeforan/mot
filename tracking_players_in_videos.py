@@ -113,85 +113,86 @@ def get_target_detection(obj, detections):
 
 
 def tracking(args):
-    img_set = img_reader.open_path(args.input, 47, 60)
-    obj = (154 ,248, 13, 38)
-    progress = 0
-    # the tracklet set at time T-1
-    tracklets = []
-    # the detector
-    player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
-    # the siamese network model for extracting feat_sim
-    siamese_model = siamese_network.Siamese()
-    result_img = []
-    for image_np in img_set:
-        progress += 1
-        _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
-        # the detection set at time T
-        detections = get_new_detections(boxes, scores, image_np, siamese_model)
-        if progress == 1:
-            target = get_target_detection(obj, detections)
-            tracklets.append(tracklet.Tracklet(target, 1))
-        print(progress)
-        # construct similarity matrix S
-        S = np.array([])
-        try:
-            S = construct_similarity_matrix.get_similarity_matrix(tracklets, detections)
-        except construct_similarity_matrix.DetectionsEmpty:
-            continue
-        except construct_similarity_matrix.TrackletsEmpty:
-            break
-            # for d in detections:
-            #     tracklets.append(tracklet.Tracklet(d, len(tracklets) + 1))
-            # continue
-
-        # the Hungarian algorithm
-        trk_index, det_index = linear_sum_assignment(1. - S)
-        low_quality_trk_index = []
-        low_quality_det_index = []
-        for i, j in zip(trk_index, det_index):
-            if S[i, j] < QUALITY_THRESHOLD:
-                low_quality_trk_index.append(i)
-                low_quality_det_index.append(j)
+    gt_file = os.path.join(args.input, args.gt)
+    with open(gt_file, 'r') as f:
+        begin, end = [int(x) for x in next(f).split()]
+        gt_bbox = [[int(x) for x in line.split()] for line in f]
+        img_set = img_reader.open_path(args.input, begin, end)
+        obj = gt_bbox[0]
+        progress = 0
+        # the tracklet set at time T-1
+        tracklets = []
+        # the detector
+        player_detector = detector.Detector(PATH_TO_MODEL, PATH_TO_LABELS, NUM_CLASSES)
+        # the siamese network model for extracting feat_sim
+        siamese_model = siamese_network.Siamese()
+        result_img = []
+        for image_np in img_set:
+            progress += 1
+            _, boxes, scores, classes, _ = player_detector.detecting_from_img(image_np)
+            # the detection set at time T
+            detections = get_new_detections(boxes, scores, image_np, siamese_model)
+            if progress == 1:
+                target = get_target_detection(obj, detections)
+                tracklets.append(tracklet.Tracklet(target, 1))
+            print(progress)
+            # construct similarity matrix S
+            S = np.array([])
+            try:
+                S = construct_similarity_matrix.get_similarity_matrix(tracklets, detections)
+            except construct_similarity_matrix.DetectionsEmpty:
                 continue
-            tracklets[i].add_detection(detections[j])
-            if args.save_player_img:
-                save_player_img(
-                    args.video,
-                    str(tracklets[i].id),
-                    tools.get_player_img(detections[j].box, image_np),
-                    str(len(tracklets[i].detections)))
+            except construct_similarity_matrix.TrackletsEmpty:
+                break
 
-        tracklets_left_index = [x for x in range(0, len(tracklets))
-                                if x not in trk_index
-                                or x in low_quality_trk_index]
+            # the Hungarian algorithm
+            trk_index, det_index = linear_sum_assignment(1. - S)
+            low_quality_trk_index = []
+            low_quality_det_index = []
+            for i, j in zip(trk_index, det_index):
+                if S[i, j] < QUALITY_THRESHOLD:
+                    low_quality_trk_index.append(i)
+                    low_quality_det_index.append(j)
+                    continue
+                tracklets[i].add_detection(detections[j])
+                if args.save_player_img:
+                    save_player_img(
+                        args.video,
+                        str(tracklets[i].id),
+                        tools.get_player_img(detections[j].box, image_np),
+                        str(len(tracklets[i].detections)))
 
-        detections_left_index = [x for x in range(0, len(detections))
-                                 if x not in det_index
-                                 or x in low_quality_det_index]
+            tracklets_left_index = [x for x in range(0, len(tracklets))
+                                    if x not in trk_index
+                                    or x in low_quality_trk_index]
 
-        if tracklets_left_index:
-            disappear_tracklets = []
-            for t in tracklets_left_index:
-                origin = tracklets[t].predict()
-                foreground_detection = find_nearest_detection(origin, detections)
-                if foreground_detection is not None and detections.index(
-                        foreground_detection) not in detections_left_index:
-                    tracklets[t].add_foreground_detection(foreground_detection)
-                if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
-                    disappear_tracklets.append(tracklets[t])
-            for t in disappear_tracklets:
-                tracklets.remove(t)
+            detections_left_index = [x for x in range(0, len(detections))
+                                     if x not in det_index
+                                     or x in low_quality_det_index]
 
-        # if detections_left_index:
-        #     for d in detections_left_index:
-        #         tracklets.append(tracklet.Tracklet(detections[d], len(tracklets) + 1))
+            if tracklets_left_index:
+                disappear_tracklets = []
+                for t in tracklets_left_index:
+                    origin = tracklets[t].predict()
+                    foreground_detection = find_nearest_detection(origin, detections)
+                    if foreground_detection is not None and detections.index(
+                            foreground_detection) not in detections_left_index:
+                        tracklets[t].add_foreground_detection(foreground_detection)
+                    if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
+                        disappear_tracklets.append(tracklets[t])
+                for t in disappear_tracklets:
+                    tracklets.remove(t)
 
-        visualize_boxes_and_labels(image_np, np.array([tracklets[0].detections[-1].box]), classes, np.array([0.9999]), player_detector.category_index)
-        visualize_tracklets(image_np, tracklets)
-        result_img.append(image_np)
-    player_detector.sess_end()
-    video_util.save_video(args.output, result_img)
-    save_tracklets(tracklets)
+            visualize_boxes_and_labels(image_np,
+                                       np.array([tracklets[0].detections[-1].box]),
+                                       classes,
+                                       np.array([0.9999]),
+                                       player_detector.category_index)
+            visualize_tracklets(image_np, tracklets)
+            result_img.append(image_np)
+        player_detector.sess_end()
+        video_util.save_video(args.output, result_img)
+        save_tracklets(tracklets)
 
 
 def main():
@@ -201,6 +202,12 @@ def main():
         required=True,
         dest='input'
     )
+    parser.add_argument(
+        '--gt',
+        required=True,
+        dest='gt'
+    )
+
     parser.add_argument(
         '--output',
         dest='output',
