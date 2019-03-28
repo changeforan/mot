@@ -33,7 +33,9 @@ def visualize_boxes_and_labels(image_np,
         np.squeeze(scores),
         category_index,
         use_normalized_coordinates=True,
-        line_thickness=8)
+        line_thickness=2,
+        skip_labels=True,
+        skip_scores=True)
 
 
 def visualize_tracklets(image_np, tracklets):
@@ -41,7 +43,7 @@ def visualize_tracklets(image_np, tracklets):
         image_np,
         tracklets,
         use_normalized_coordinates=True,
-        line_thickness=8)
+        line_thickness=2)
 
 
 def save_tracklets(tracklets: [tracklet.Tracklet]):
@@ -116,7 +118,7 @@ def tracking(args):
             for d in detections:
                 tracklets.append(tracklet.Tracklet(d, len(tracklets) + 1))
             continue
-        print(str(progress) + ': ' + str(S.shape))
+
         # the Hungarian algorithm
         trk_index, det_index = linear_sum_assignment(1. - S)
         low_quality_trk_index = []
@@ -125,32 +127,29 @@ def tracking(args):
             if S[i, j] < QUALITY_THRESHOLD:
                 low_quality_trk_index.append(i)
                 low_quality_det_index.append(j)
-                continue
-            tracklets[i].add_detection(detections[j])
-            if args.save_player_img:
-                save_player_img(
-                    args.video,
-                    str(tracklets[i].id),
-                    tools.get_player_img(detections[j].box, image_np),
-                    str(len(tracklets[i].detections)))
-        tracklets_left_index = [x for x in range(0, len(tracklets))
-                                if x not in trk_index
-                                or x in low_quality_trk_index]
-        detections_left_index = [x for x in range(0, len(detections))
-                                 if x not in det_index
-                                 or x in low_quality_det_index]
+            else:
+                tracklets[i].add_detection(detections[j])
+                if args.save_player_img:
+                    save_player_img(args.video,
+                                    str(tracklets[i].id),
+                                    tools.get_player_img(detections[j].box, image_np),
+                                    str(len(tracklets[i].detections)))
+
+        tracklets_left_index = set(range(0, len(tracklets))) - set(trk_index) | set(low_quality_trk_index)
+
+        detections_left_index = set(range(0, len(detections))) - set(det_index) | set(low_quality_det_index)
+
         if tracklets_left_index:
             disappear_tracklets = []
             for t in tracklets_left_index:
-                origin = tracklets[t].predict()
-                foreground_detection = find_nearest_detection(origin, detections)
-                if foreground_detection is not None and detections.index(
-                        foreground_detection) not in detections_left_index:
+                foreground_detection = find_nearest_detection(tracklets[t].predict(), detections)
+                if foreground_detection is not None and detections.index(foreground_detection) not in detections_left_index:
                     tracklets[t].add_foreground_detection(foreground_detection)
                 if tracklets[t].vanish() > DISAPPEAR_THRESHOLD:
                     disappear_tracklets.append(tracklets[t])
             for t in disappear_tracklets:
                 tracklets.remove(t)
+
         if detections_left_index:
             for d in detections_left_index:
                 tracklets.append(tracklet.Tracklet(detections[d], len(tracklets) + 1))
