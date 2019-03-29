@@ -86,7 +86,7 @@ def visualize_tracklets_on_image_array(image_np,
                                   line_thickness)
       draw_bounding_box_on_image(image_pil,
                                  tracklet.detections[-1].box,
-                                 ['player:' + str(tracklet.id)],
+                                 [' player: ' + str(tracklet.id) + ' '],
                                  'blue',
                                  2,
                                  use_normalized_coordinates)
@@ -125,7 +125,7 @@ def draw_bounding_box_on_image(image,
   draw.line([(left, top), (left, bottom), (right, bottom),
              (right, top), (left, top)], width=thickness, fill=color)
   try:
-    font = ImageFont.truetype('helper/arial.ttf', 24)
+    font = ImageFont.truetype('helper/arial.ttf', 48)
   except IOError:
     font = ImageFont.load_default()
 
