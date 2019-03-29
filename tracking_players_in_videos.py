@@ -16,8 +16,8 @@ NUM_CLASSES = 1
 
 
 # Thresholds
-DISAPPEAR_THRESHOLD = 5
-QUALITY_THRESHOLD = 0.95
+DISAPPEAR_THRESHOLD = 10
+QUALITY_THRESHOLD = 0.8
 NEAR_THRESHOLD = 1.0
 
 
@@ -43,7 +43,7 @@ def visualize_tracklets(image_np, tracklets):
         image_np,
         tracklets,
         use_normalized_coordinates=True,
-        line_thickness=2)
+        line_thickness=6)
 
 
 def save_tracklets(tracklets: [tracklet.Tracklet]):
@@ -171,7 +171,7 @@ def main():
     parser.add_argument(
         '--output',
         dest='output',
-        default='out.avi'
+        default='out/'
     )
     parser.add_argument(
         '--max_frame',

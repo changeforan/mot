@@ -1,6 +1,7 @@
 import numpy as np
-from . import kalman_filter
 from . import detection
+import cv2
+
 
 class Tracklet:
     def __init__(self, det:detection.Detection, id:int, disappear=0):
@@ -8,28 +9,49 @@ class Tracklet:
         self.detections = [det]
         self.id = id
         self.disappear = disappear
-        self.ss = kalman_filter.KalmanFilter()
-        #self.ss.correct([point[0] * 100, point[1] * 100], 1)
+        self.filter = cv2.KalmanFilter(4, 2)
+        self.filter.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
+        # 设置转移矩阵
+        self.filter.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
+        # 设置过程噪声协方差矩阵
+        self.filter.processNoiseCov = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32) * 0.03
+        self.move(*det.location)
+        self.current_prediction = np.zeros((2, 1), np.float32)
+
+    def move(self, x, y):
+        x *= 100
+        y *= 100
+        # 传递当前测量坐标值
+        current_measurement = np.array([[np.float32(x)], [np.float32(y)]])
+        # 用来修正卡尔曼滤波的预测结果
+        self.filter.correct(current_measurement)
+        self.current_prediction= self.filter.predict()[:2] / 100
 
     def add_detection(self, det):
-        self.detections.append(det)
+        if len(self.detections) > 20:
+            pre_det = detection.Detection(det.location, det.feat_cnn, det.feat_sim, det.width, det.box)
+            pre_det.location = self.current_prediction
+            self.detections.append(pre_det)
+        else:
+            self.detections.append(det)
         self.disappear = 0
-        #self.ss.correct(detection.location, 1)
-
+        self.move(*det.location)
 
     def add_foreground_detection(self, det):
         self.detections.append(det)
         self.disappear = 0
-        #self.ss.correct(detection.location, 1)
-
+        self.move(*det.location)
 
     def vanish(self):
         self.disappear += 1
         return self.disappear
 
     def predict(self):
-        return self.detections[-1].location
-        # return self.ss.predict() / 100.
+        if len(self.detections) < 20:
+            return self.detections[-1].location
+        else:
+            p = self.current_prediction
+            return p
 
     def get_points(self):
         return [x.location for x in self.detections]

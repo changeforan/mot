@@ -1,5 +1,5 @@
 import cv2
-
+import os
 
 def open_video(path, max_frame):
     cap = cv2.VideoCapture(path)
@@ -13,11 +13,9 @@ def open_video(path, max_frame):
 
 
 def save_video(path, image_np_list):
-    out = cv2.VideoWriter(
-        path,
-        cv2.VideoWriter_fourcc(*'XVID'),
-        20.0,
-        (800, 600))
+    index = 0
     for image_np in image_np_list:
-        out.write(cv2.resize(image_np, (800, 600)))
-    cv2.destroyAllWindows()
+
+        name = str(index) + '.jpg'
+        index += 1
+        cv2.imwrite(os.path.join(path, name), image_np)
