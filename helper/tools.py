@@ -125,7 +125,7 @@ def draw_bounding_box_on_image(image,
   draw.line([(left, top), (left, bottom), (right, bottom),
              (right, top), (left, top)], width=thickness, fill=color)
   try:
-    font = ImageFont.truetype('helper/arial.ttf', 48)
+    font = ImageFont.truetype('helper/arial.ttf', 36)
   except IOError:
     font = ImageFont.load_default()
 
@@ -154,7 +154,6 @@ def draw_bounding_box_on_image(image,
         fill='black',
         font=font)
     text_bottom -= text_height - 2 * margin
-
 
 
 def get_color(tracklet):
