@@ -1,31 +1,24 @@
 import numpy as np
 from . import detection
-import cv2
+from . import kalman_filter
 
 
 class Tracklet:
-    def __init__(self, det:detection.Detection, id:int, disappear=0):
+    def __init__(self, det: detection.Detection, id: int, disappear=0):
         self.color = np.random.randint(30)
         self.detections = [det]
         self.id = id
         self.disappear = disappear
-        self.filter = cv2.KalmanFilter(4, 2)
-        self.filter.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
-        # 设置转移矩阵
-        self.filter.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
-        # 设置过程噪声协方差矩阵
-        self.filter.processNoiseCov = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32) * 0.03
-        self.move(*det.location)
+        self.filter = kalman_filter.KalmanFilter()
         self.current_prediction = np.zeros((2, 1), np.float32)
+        self.move(*det.location)
 
     def move(self, x, y):
-        x *= 100
-        y *= 100
         # 传递当前测量坐标值
-        current_measurement = np.array([[np.float32(x)], [np.float32(y)]])
+        current_measurement = np.array([np.float32(x), np.float32(y)])
         # 用来修正卡尔曼滤波的预测结果
-        self.filter.correct(current_measurement)
-        self.current_prediction= self.filter.predict()[:2] / 100
+        self.filter.correct(current_measurement, 1)
+        self.current_prediction = self.filter.predict()[0]
 
     def add_detection(self, det):
         if len(self.detections) > 20:
@@ -50,8 +43,7 @@ class Tracklet:
         if len(self.detections) < 20:
             return self.detections[-1].location
         else:
-            p = self.current_prediction
-            return p
+            return self.current_prediction
 
     def get_points(self):
         return [x.location for x in self.detections]

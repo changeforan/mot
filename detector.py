@@ -75,7 +75,6 @@ class Detector:
                                self.detection_feat_cnn,
                                self.num_detections,
                                image_np,
-                               self.sess
-                               )
+                               self.sess)
 
 
