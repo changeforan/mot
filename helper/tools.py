@@ -86,7 +86,7 @@ def visualize_tracklets_on_image_array(image_np,
                                   line_thickness)
       draw_bounding_box_on_image(image_pil,
                                  tracklet.detections[-1].box,
-                                 [str(tracklet.id)],
+                                 ['player:' + str(tracklet.id)],
                                  'blue',
                                  2,
                                  use_normalized_coordinates)
