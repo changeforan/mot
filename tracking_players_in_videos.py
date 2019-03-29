@@ -154,7 +154,7 @@ def tracking(args):
             for d in detections_left_index:
                 tracklets.append(tracklet.Tracklet(detections[d], len(tracklets) + 1))
 
-        visualize_boxes_and_labels(image_np, boxes, classes, scores, player_detector.category_index)
+        # visualize_boxes_and_labels(image_np, boxes, classes, scores, player_detector.category_index)
         visualize_tracklets(image_np, tracklets)
         image_np_list.append(image_np)
     player_detector.sess_end()

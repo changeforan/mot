@@ -80,21 +80,43 @@ def visualize_tracklets_on_image_array(image_np,
                                        line_thickness):
   image_pil = Image.fromarray(np.uint8(image_np)).convert('RGB')
   for tracklet in tracklets:
-    visualize_tracklet_on_image(image_pil, tracklet, use_normalized_coordinates, line_thickness)
+      visualize_tracklet_on_image(image_pil, tracklet, use_normalized_coordinates, line_thickness)
+      draw_bounding_box_on_image(image_pil, tracklet.detections[-1].box, use_normalized_coordinates, 2)
+
   np.copyto(image_np, np.array(image_pil))
 
+
 def visualize_tracklet_on_image(image_pil,
-                                tracklet,
-                                use_normalized_coordinates,
-                                line_thickness):
-  draw = ImageDraw.Draw(image_pil)
-  im_width, im_height = image_pil.size
-  if not use_normalized_coordinates:
-    im_width = 1
-    im_height = 1
-  draw.line([(x[1]*im_width,x[0]*im_height) for x in tracklet.get_points()],
-            fill=get_color(tracklet),
-            width=line_thickness)
+                                  tracklet,
+                                  use_normalized_coordinates,
+                                  line_thickness):
+    draw = ImageDraw.Draw(image_pil)
+    im_width, im_height = image_pil.size
+    if not use_normalized_coordinates:
+        im_width = 1
+        im_height = 1
+    draw.line([(x[1]*im_width, x[0]*im_height) for x in tracklet.get_points()],
+              fill=get_color(tracklet),
+              width=line_thickness)
+
+
+def draw_bounding_box_on_image(image,
+                                 bbox,
+                                 color='red',
+                                 thickness=4,
+                                 use_normalized_coordinates=True):
+  draw = ImageDraw.Draw(image)
+  im_width, im_height = image.size
+  ymin, xmin, ymax, xmax = bbox
+  if use_normalized_coordinates:
+    (left, right, top, bottom) = (xmin * im_width, xmax * im_width,
+                                  ymin * im_height, ymax * im_height)
+  else:
+    (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
+  draw.line([(left, top), (left, bottom), (right, bottom),
+             (right, top), (left, top)], width=thickness, fill=color)
+
+
 
 def get_color(tracklet):
   return STANDARD_COLORS[int(tracklet.color / 30.0 * len(STANDARD_COLORS))]
