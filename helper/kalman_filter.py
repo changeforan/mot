@@ -27,7 +27,7 @@ class KalmanFilter(object):
         Return:
             None
         """
-        self.dt = 0.005  # 0.005  # delta time
+        self.dt = 0.007  # 0.005  # delta time
 
         self.H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
         # np.array([[1, 0], [0, 1]])  # matrix in observation equations, measurement function A ==> for H
