@@ -27,7 +27,7 @@ class KalmanFilter(object):
         Return:
             None
         """
-        self.dt = 0.05  # 0.005  # delta time
+        self.dt = 0.2  # 0.005  # delta time
 
         self.H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
         # np.array([[1, 0], [0, 1]])  # matrix in observation equations, measurement function A ==> for H
@@ -83,7 +83,7 @@ class KalmanFilter(object):
         self.P = np.dot(self.F, np.dot(self.P, self.F.T)) + self.Q
         self.lastResult = self.x  # same last predicted result
         # print ("pred", self.x)
-        return self.x / 100
+        return self.x / 1000
 
     def correct(self, z, flag):
         """Correct or update state vector u and variance of uncertainty P (covariance).
@@ -110,7 +110,7 @@ class KalmanFilter(object):
             predicted state vector u
         """
 
-        z = np.array(z) * 100
+        z = np.array(z) * 1000
         if not flag:  # update using prediction
             self.z = np.array([[self.lastResult[0][0]], [self.lastResult[1][0]]])
             LastR = self.z
@@ -128,7 +128,7 @@ class KalmanFilter(object):
         if not flag:
             self.x = self.lastResult
 
-        return self.x / 100
+        return self.x / 1000
 
 if __name__ == '__main__':
 
