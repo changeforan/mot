@@ -81,7 +81,7 @@ def visualize_tracklets_on_image_array(image_np,
   image_pil = Image.fromarray(np.uint8(image_np)).convert('RGB')
   for tracklet in tracklets:
       visualize_tracklet_on_image(image_pil, tracklet, use_normalized_coordinates, line_thickness)
-      draw_bounding_box_on_image(image_pil, tracklet.detections[-1].box, use_normalized_coordinates, 2)
+      draw_bounding_box_on_image(image_pil, tracklet.detections[-1].box, 'blue', 2, use_normalized_coordinates)
 
   np.copyto(image_np, np.array(image_pil))
 
