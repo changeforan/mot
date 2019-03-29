@@ -58,7 +58,7 @@ class KalmanFilter(object):
                            [0.5 * self.dt ** 2],
                            [self.dt],
                            [self.dt]])
-        self.u = 50
+        self.u = 5
 
     def predict(self):
         """Predict state vector u and variance of uncertainty P (covariance).
@@ -166,13 +166,16 @@ if __name__ == '__main__':
     SS = KalmanFilter()
 
     for i in range(len(z)):
-        print('ordem', i)
+
         Predict = SS.predict()
         Correct = SS.correct([z[i][0], z[i][1]], 1)
 
-        print("Meas :", z[i])
-        print("Predict :", Predict[0])
-        print("Correction :", Correct[0])
+    for i in range(10):
+        predict = SS.predict()[0]
+        print(*predict)
+        SS.correct(*predict)
+
+
 
 
 

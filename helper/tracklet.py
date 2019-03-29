@@ -33,7 +33,7 @@ class Tracklet:
         det = copy.copy(self.detections[-1])
         det.location = self.predict()
         self.detections.append(det)
-        self.move(*det.location)
+        self.move(*foreground_det.location)
         self.disappear = 0
 
     def vanish(self):
