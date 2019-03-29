@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import PIL.Image as Image
 import PIL.ImageDraw as ImageDraw
+import PIL.ImageFont as ImageFont
 
 STANDARD_COLORS = [
     'AliceBlue', 'Chartreuse', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque',
@@ -80,8 +81,15 @@ def visualize_tracklets_on_image_array(image_np,
                                        line_thickness):
   image_pil = Image.fromarray(np.uint8(image_np)).convert('RGB')
   for tracklet in tracklets:
-      visualize_tracklet_on_image(image_pil, tracklet, use_normalized_coordinates, line_thickness)
-      draw_bounding_box_on_image(image_pil, tracklet.detections[-1].box, 'blue', 2, use_normalized_coordinates)
+      visualize_tracklet_on_image(image_pil, tracklet,
+                                  use_normalized_coordinates,
+                                  line_thickness)
+      draw_bounding_box_on_image(image_pil,
+                                 tracklet.detections[-1].box,
+                                 [str(tracklet.id)],
+                                 'blue',
+                                 2,
+                                 use_normalized_coordinates)
 
   np.copyto(image_np, np.array(image_pil))
 
@@ -102,6 +110,7 @@ def visualize_tracklet_on_image(image_pil,
 
 def draw_bounding_box_on_image(image,
                                  bbox,
+                                 display_str_list,
                                  color='blue',
                                  thickness=4,
                                  use_normalized_coordinates=True):
@@ -115,6 +124,36 @@ def draw_bounding_box_on_image(image,
     (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
   draw.line([(left, top), (left, bottom), (right, bottom),
              (right, top), (left, top)], width=thickness, fill=color)
+  try:
+    font = ImageFont.truetype('arial.ttf', 24)
+  except IOError:
+    font = ImageFont.load_default()
+
+  # If the total height of the display strings added to the top of the bounding
+  # box exceeds the top of the image, stack the strings below the bounding box
+  # instead of above.
+  display_str_heights = [font.getsize(ds)[1] for ds in display_str_list]
+  # Each display_str has a top and bottom margin of 0.05x.
+  total_display_str_height = (1 + 2 * 0.05) * sum(display_str_heights)
+
+  if top > total_display_str_height:
+    text_bottom = top
+  else:
+    text_bottom = bottom + total_display_str_height
+  # Reverse list and print from bottom to top.
+  for display_str in display_str_list[::-1]:
+    text_width, text_height = font.getsize(display_str)
+    margin = np.ceil(0.05 * text_height)
+    draw.rectangle(
+        [(left, text_bottom - text_height - 2 * margin), (left + text_width,
+                                                          text_bottom)],
+        fill=color)
+    draw.text(
+        (left + margin, text_bottom - text_height - margin),
+        display_str,
+        fill='black',
+        font=font)
+    text_bottom -= text_height - 2 * margin
 
 
 
