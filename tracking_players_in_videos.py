@@ -171,7 +171,7 @@ def main():
     parser.add_argument(
         '--output',
         dest='output',
-        default='out/'
+        default='out'
     )
     parser.add_argument(
         '--max_frame',
