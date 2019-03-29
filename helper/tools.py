@@ -102,7 +102,7 @@ def visualize_tracklet_on_image(image_pil,
 
 def draw_bounding_box_on_image(image,
                                  bbox,
-                                 color='red',
+                                 color='blue',
                                  thickness=4,
                                  use_normalized_coordinates=True):
   draw = ImageDraw.Draw(image)
