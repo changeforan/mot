@@ -11,13 +11,15 @@ class Tracklet:
         self.id = id
         self.disappear = disappear
         self.filter = kalman_filter.KalmanFilter()
-        self.current_prediction = self.filter.predict()
-        self.filter.correct(det.location)
+        for i in range(20):
+            self.current_prediction = self.filter.predict()
+            self.filter.correct(det.location)
+        self.t = 5
 
     def add_detection(self, det):
         self.filter.correct(det.location)
-        if len(self.detections) > 5:
-            det.location = self.current_prediction
+        if len(self.detections) > self.t:
+            det.change_location(self.current_prediction)
         self.current_prediction = self.filter.predict()
         self.detections.append(det)
         self.disappear = 0
@@ -25,10 +27,10 @@ class Tracklet:
     def add_foreground_detection(self, foreground_det):
         self.filter.correct(foreground_det.location)
         det = copy.copy(self.detections[-1])
-        if len(self.detections) > 5:
-            det.location = self.current_prediction
+        if len(self.detections) > self.t:
+            det.change_location(self.current_prediction, True)
         else:
-            det.location = foreground_det.location
+            det.change_location(foreground_det.location, True)
         self.current_prediction = self.filter.predict()
         self.detections.append(det)
         self.disappear = 0
@@ -42,7 +44,7 @@ class Tracklet:
         return self.disappear
 
     def predict(self):
-        if len(self.detections) < 5:
+        if len(self.detections) < self.t:
             return self.detections[-1].location
         else:
             return self.current_prediction
