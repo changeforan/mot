@@ -11,29 +11,26 @@ class Tracklet:
         self.id = id
         self.disappear = disappear
         self.filter = kalman_filter.KalmanFilter()
-        self.current_prediction = np.zeros((2, 1), np.float32)
-        self.move(*det.location)
-
-    def move(self, x, y):
-        # 传递当前测量坐标值
-        current_measurement = np.array([np.float32(x), np.float32(y)])
-        self.current_prediction = self.filter.predict()[0]
-        # 用来修正卡尔曼滤波的预测结果
-        return self.filter.correct(current_measurement, 1)[0]
+        self.current_prediction = self.filter.predict()
+        self.filter.correct(det.location)
 
     def add_detection(self, det):
-        tmp = det.location
-        if len(self.detections) >= 10:
-            det.location = self.predict()
+        self.filter.correct(det.location)
+        if len(self.detections) > 5:
+            det.location = self.current_prediction
+        self.current_prediction = self.filter.predict()
         self.detections.append(det)
-        self.move(*tmp)
         self.disappear = 0
 
     def add_foreground_detection(self, foreground_det):
+        self.filter.correct(foreground_det.location)
         det = copy.copy(self.detections[-1])
-        det.location = self.predict()
+        if len(self.detections) > 5:
+            det.location = self.current_prediction
+        else:
+            det.location = foreground_det.location
+        self.current_prediction = self.filter.predict()
         self.detections.append(det)
-        self.move(*foreground_det.location)
         self.disappear = 0
 
     def vanish(self):
@@ -45,7 +42,7 @@ class Tracklet:
         return self.disappear
 
     def predict(self):
-        if len(self.detections) < 10:
+        if len(self.detections) < 5:
             return self.detections[-1].location
         else:
             return self.current_prediction
