@@ -17,20 +17,20 @@ class Tracklet:
         self.t = 5
 
     def add_detection(self, det):
-        self.filter.correct(det.location)
-        if len(self.detections) > self.t:
-            det.change_location(self.current_prediction)
+        det.chage_location(self.filter.correct(det.location))
+        # if len(self.detections) > self.t:
+        #     det.change_location(self.current_prediction)
         self.current_prediction = self.filter.predict()
         self.detections.append(det)
         self.disappear = 0
 
     def add_foreground_detection(self, foreground_det):
-        self.filter.correct(foreground_det.location)
         det = copy.copy(self.detections[-1])
-        if len(self.detections) > self.t:
-            det.change_location(self.current_prediction, True)
-        else:
-            det.change_location(foreground_det.location, True)
+        det.change_location(self.filter.correct(foreground_det.location),True)
+        # if len(self.detections) > self.t:
+        #     det.change_location(self.current_prediction, True)
+        # else:
+        #     det.change_location(foreground_det.location, True)
         self.current_prediction = self.filter.predict()
         self.detections.append(det)
         self.disappear = 0

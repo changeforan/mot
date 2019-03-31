@@ -24,7 +24,7 @@ class KalmanFilter(object):
 
     def correct(self, z):
         current_measurement = np.array([[np.float32(z[0])], [np.float32(z[1])]])
-        self.filter.correct(current_measurement)
+        return np.squeeze(self.filter.correct(current_measurement)[:2])
 
 
 
