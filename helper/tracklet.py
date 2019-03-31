@@ -17,7 +17,7 @@ class Tracklet:
         self.t = 5
 
     def add_detection(self, det):
-        det.chage_location(self.filter.correct(det.location))
+        det.change_location(self.filter.correct(det.location))
         # if len(self.detections) > self.t:
         #     det.change_location(self.current_prediction)
         self.current_prediction = self.filter.predict()
